@@ -17,12 +17,20 @@ Côté XSplit:
 
 Ajouter des sources "text" en utilisant le custom script "Load Text from Local File".
 Utiliser les file path suivants:
+
 Nom du jeu: <appli retrolection>/text-files/game.txt
+
 L'indicateur de progression: <appli retrolection>/text-files/progression.txt
+
 Nom du viewer don: <appli retrolection>/text-files/viewer-don.txt
+
 Nom du viewer sub: <appli retrolection>/text-files/viewer-sub.txt
+
 Timer: <appli retrolection>/text-files/timer.txt
 
+
 Pour le timer il y a un bug côté XSplit. On peut le contourner en utilisant un script spécifique.
+
 Pour la source "text" du timer, au lieu d'utiliser le custom script "Load Text from Local File" il faut utiliser un "Block Template" et copier le contenu du script:
+
 <appli retrolection>/xsplit-script/update-timer-script.js
