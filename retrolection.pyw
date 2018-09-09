@@ -25,9 +25,6 @@ class MainFrame(tkinter.Frame):
 		
 		self.pack(expand = tkinter.YES, fill = tkinter.BOTH)
 		
-		# self.frame_title = tkinter.Frame(self)
-		# self.frame_title.pack(side = tkinter.TOP, fill = tkinter.BOTH)
-		
 		self.frame_left = tkinter.Frame(self, width = 300)
 		self.frame_left.pack_propagate(False)
 		self.frame_left.pack(side = tkinter.LEFT, fill = tkinter.BOTH)
