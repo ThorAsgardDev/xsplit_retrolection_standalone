@@ -26,7 +26,7 @@ Nom du viewer sub: <appli retrolection>/text-files/viewer-sub.txt
 Timer: <appli retrolection>/text-files/timer.txt
 ```
 
-Pour le timer il y a un bug côté XSplit. On peut le contourner en utilisant un script spécifique.
+Pour le timer il y a un bug côté XSplit. On peut le contourner en utilisant la manip suivante:
 
 Pour la source "text" du timer, au lieu d'utiliser le custom script "Load Text from Local File" il faut utiliser un "Block Template" et copier le contenu du script:
 ```
