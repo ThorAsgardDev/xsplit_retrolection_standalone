@@ -32,3 +32,12 @@ Pour la source "text" du timer, au lieu d'utiliser le custom script "Load Text f
 ```
 <appli retrolection>/xsplit-script/update-timer-script.js
 ```
+
+Pour la jaquette, il faut ajouter une source de type "General Widgets -> Image Slideshow"
+Dans la configuration de la source, cocher la case "Auto-refresh images" et ajouter le fichier suivant:
+
+```
+<appli retrolection>/img-files/cover.png
+```
+
+La jaquette sera mise à jour lors d'un clique sur le bouton "Envoyer les valeurs vers XSplit"

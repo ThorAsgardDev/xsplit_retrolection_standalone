@@ -3,6 +3,7 @@ import time
 import configparser
 import urllib.request
 import json
+import shutil
 import tkinter
 import tkinter.ttk
 import tkinter.filedialog
@@ -114,6 +115,7 @@ class MainFrame(tkinter.Frame):
 		
 		button = tkinter.Button(self.frame_cover, relief = tkinter.GROOVE, text = "Charger...", command = self.on_cover_load_click)
 		button.pack(fill = tkinter.X, padx = 5, pady = 5)
+		
 		self.canvas_cover = tkinter.Canvas(self.frame_cover, bg = "black")
 		self.canvas_cover.pack(expand = tkinter.YES, fill = tkinter.BOTH)
 		self.canvas_cover.bind("<Configure>", self.canvas_cover_configure)
@@ -122,11 +124,16 @@ class MainFrame(tkinter.Frame):
 		self.refresh_cover(event.width, event.height)
 		
 	def on_update_xsplit_click(self):
-		self.write_file("text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()])
-		self.write_file("text-files/progression.txt", self.label_progress.cget("text"))
-		self.write_file("text-files/viewer-sub.txt", self.label_viewer_sub.cget("text"))
-		self.write_file("text-files/viewer-don.txt", self.label_viewer_don.cget("text"))
-		self.write_file("text-files/timer.txt", self.label_timer.cget("text"))
+		self.write_file("w", "text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()])
+		self.write_file("w", "text-files/progression.txt", self.label_progress.cget("text"))
+		self.write_file("w", "text-files/viewer-sub.txt", self.label_viewer_sub.cget("text"))
+		self.write_file("w", "text-files/viewer-don.txt", self.label_viewer_don.cget("text"))
+		self.write_file("w", "text-files/timer.txt", self.label_timer.cget("text"))
+		
+		if not self.pil_cover:
+			self.copy_file("default-cover.png", "img-files/cover.png")
+		else:
+			self.copy_file("cover.png", "img-files/cover.png")
 		
 	def on_cover_load_click(self):
 		file_name = tkinter.filedialog.askopenfilename()
@@ -137,8 +144,14 @@ class MainFrame(tkinter.Frame):
 				tkinter.messagebox.showerror("Error", "Image " + file_name + " cannot be loaded.")
 				self.pil_cover = None
 				
+			if self.pil_cover:
+				pil_cover_resized = self.resize_image(self.pil_cover, 400, 400)
+				pil_cover_resized_width, pil_cover_resized_height = pil_cover_resized.size
+				image = PIL.Image.new('RGB', (400, 400), (0, 0, 0))
+				image.paste(pil_cover_resized, ((400 - pil_cover_resized_width) // 2, (400 - pil_cover_resized_height) // 2))
+				image.save("cover.png")
+				
 			self.refresh_cover(self.canvas_cover.winfo_width(), self.canvas_cover.winfo_height())
-			
 			
 	def timer_action_start(self):
 		self.button_timer_action.config(text = "Stop")
@@ -176,23 +189,26 @@ class MainFrame(tkinter.Frame):
 		t += 1
 		s = self.timeSecToStr(t)
 		self.label_timer.config(text = s)
-		self.write_file("text-files/timer.txt", s)
+		self.write_file("w", "text-files/timer.txt", s)
 		self.timer_id = self.window.after(1000, self.update_timer)
+		
+	def resize_image(self, image, width, height):
+		img_width, img_height = image.size
+		ratio = img_width / img_height
+		if img_height < img_width:
+			new_width = width - 10
+			new_height = int(new_width / ratio)
+		else:
+			new_height = height - 10
+			new_width = int(new_height * ratio)
+			
+		return image.resize((new_width, new_height), PIL.Image.ANTIALIAS)
 		
 	def refresh_cover(self, canvas_width, canvas_height):
 		if not self.pil_cover:
 			self.canvas_cover.delete("all")
 		else:
-			img_width, img_height = self.pil_cover.size
-			ratio = img_width / img_height
-			if img_height < img_width:
-				new_width = canvas_width - 10
-				new_height = int(new_width / ratio)
-			else:
-				new_height = canvas_height - 10
-				new_width = int(new_height * ratio)
-				
-			pil_cover_resized = self.pil_cover.resize((new_width, new_height), PIL.Image.ANTIALIAS)
+			pil_cover_resized = self.resize_image(self.pil_cover, canvas_width, canvas_height)
 			self.img_cover = PIL.ImageTk.PhotoImage(pil_cover_resized) # reference to image must be kept to avoid garbage deletion
 			self.canvas_cover.create_image((canvas_width // 2, canvas_height // 2), image = self.img_cover)
 			
@@ -307,12 +323,22 @@ class MainFrame(tkinter.Frame):
 		self.timer_action_stop()
 		self.label_timer.config(text = value)
 		
-	def write_file(self, file_name, value):
+	def write_file(self, mode, file_name, value):
 		nb_retries = 0
 		while nb_retries < 5:
 			try:
-				with open(file_name, "w") as f:
+				with open(file_name, mode) as f:
 					f.write(value)
+				break
+			except:
+				nb_retries += 1
+				time.sleep(0.01)
+				
+	def copy_file(self, src_file_name, dst_file_name):
+		nb_retries = 0
+		while nb_retries < 5:
+			try:
+				shutil.copyfile(src_file_name, dst_file_name)
 				break
 			except:
 				nb_retries += 1
