@@ -23,6 +23,8 @@ Nom du jeu: <appli retrolection>/text-files/game.txt
 L'indicateur de progression: <appli retrolection>/text-files/progression.txt
 Nom du viewer don: <appli retrolection>/text-files/viewer-don.txt
 Nom du viewer sub: <appli retrolection>/text-files/viewer-sub.txt
+Défi don: <appli retrolection>/text-files/challenge-don.txt
+Défi sub: <appli retrolection>/text-files/challenge-sub.txt
 Timer du jeu: <appli retrolection>/text-files/timer-game.txt
 Timer Retrolection: <appli retrolection>/text-files/timer-total.txt
 ```

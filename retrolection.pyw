@@ -101,6 +101,16 @@ class MainFrame(tkinter.Frame):
 		self.label_viewer_don = tkinter.Label(self.frame_sheet_values)
 		self.label_viewer_don.pack(anchor = tkinter.W, padx = 5, pady = 5)
 		
+		label = tkinter.Label(self.frame_sheet_labels, text = "Défi sub: ")
+		label.pack(anchor = tkinter.W, padx = 5, pady = 5)
+		self.label_challenge_sub = tkinter.Label(self.frame_sheet_values)
+		self.label_challenge_sub.pack(anchor = tkinter.W, padx = 5, pady = 5)
+		
+		label = tkinter.Label(self.frame_sheet_labels, text = "Défi don: ")
+		label.pack(anchor = tkinter.W, padx = 5, pady = 5)
+		self.label_challenge_don = tkinter.Label(self.frame_sheet_values)
+		self.label_challenge_don.pack(anchor = tkinter.W, padx = 5, pady = 5)
+		
 		button = tkinter.Button(self.frame_sheet_bottom, relief = tkinter.GROOVE, text = "Envoyer les valeurs vers XSplit", command = self.on_update_xsplit_click)
 		button.pack(fill = tkinter.X, padx = 5, pady = 5)
 		
@@ -135,6 +145,8 @@ class MainFrame(tkinter.Frame):
 		self.write_file("w", "text-files/progression.txt", self.label_progress.cget("text"))
 		self.write_file("w", "text-files/viewer-sub.txt", self.label_viewer_sub.cget("text"))
 		self.write_file("w", "text-files/viewer-don.txt", self.label_viewer_don.cget("text"))
+		self.write_file("w", "text-files/challenge-sub.txt", self.label_challenge_sub.cget("text"))
+		self.write_file("w", "text-files/challenge-don.txt", self.label_challenge_don.cget("text"))
 		self.write_file("w", "text-files/timer-game.txt", self.label_timer_game.cget("text"))
 		self.write_file("w", "text-files/timer-total.txt", self.label_timer_total.cget("text"))
 		
@@ -251,6 +263,12 @@ class MainFrame(tkinter.Frame):
 			return None
 		else:
 			return data["values"]
+			
+	def get_sheet_properties(self, sheet_name, cell_range):
+		url = "https://sheets.googleapis.com/v4/spreadsheets/" + self.config["SHEET"]["SPREAD_SHEET_ID"] + "/?key=" + self.config["SHEET"]["API_KEY"] + "&ranges=" + urllib.parse.quote(sheet_name) + "!" + cell_range + "&includeGridData=true";
+		data = self.get_json(url)
+		
+		return data["sheets"][0]["data"][0]["rowData"][0]["values"]
 		
 	def on_combo_consoles_changed(self, event):
 		self.process_on_combo_consoles_changed()
@@ -265,6 +283,8 @@ class MainFrame(tkinter.Frame):
 	def process_on_combo_games_changed(self):
 		self.fill_viewer_sub()
 		self.fill_viewer_don()
+		self.fill_challenge_sub()
+		self.fill_challenge_don()
 		self.fill_timers()
 		
 	def fill_consoles(self):
@@ -335,6 +355,46 @@ class MainFrame(tkinter.Frame):
 			value = sheet_values[0][0]
 			
 		self.label_viewer_don.config(text = value)
+		
+	def get_selected_challenge(self, properties):
+		for p in properties:
+			if "userEnteredFormat" in p:
+				if "backgroundColor" in p["userEnteredFormat"]:
+					background_color = p["userEnteredFormat"]["backgroundColor"]
+					red = 0
+					green = 0
+					blue = 0
+					if "red" in background_color:
+						red = background_color["red"];
+					if "green" in background_color:
+						green = background_color["green"];
+					if "blue" in background_color:
+						blue = background_color["blue"];
+						
+					if red == 0 and green == 1 and blue == 0:
+						return p["formattedValue"]
+					
+		return ""
+		
+	def fill_challenge_sub(self):
+		console = self.combo_consoles.cget("values")[self.combo_consoles.current()]
+		game_id = int(self.config["SHEET"]["FIRST_GAME_LINE"]) + self.combo_games.current()
+		cell = self.config["SHEET"]["CHALLENGE_SUB_COLUMN"] + str(game_id)
+		sheet_properties = self.get_sheet_properties(console, cell + ":" + cell)
+		
+		selected_challenge = self.get_selected_challenge(sheet_properties)
+		
+		self.label_challenge_sub.config(text = selected_challenge)
+		
+	def fill_challenge_don(self):
+		console = self.combo_consoles.cget("values")[self.combo_consoles.current()]
+		game_id = int(self.config["SHEET"]["FIRST_GAME_LINE"]) + self.combo_games.current()
+		cell_range = self.config["SHEET"]["CHALLENGE_DON_FIRST_COLUMN"] + str(game_id) + ":" + self.config["SHEET"]["CHALLENGE_DON_LAST_COLUMN"] + str(game_id)
+		sheet_properties = self.get_sheet_properties(console, cell_range)
+		
+		selected_challenge = self.get_selected_challenge(sheet_properties)
+		
+		self.label_challenge_don.config(text = selected_challenge)
 		
 	def fill_timers(self):
 		console = self.combo_consoles.cget("values")[self.combo_consoles.current()]
