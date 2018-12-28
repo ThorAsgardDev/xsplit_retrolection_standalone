@@ -20,7 +20,8 @@ Utiliser les file path suivants:
 
 ```
 Nom du jeu: <appli retrolection>/text-files/game.txt
-L'indicateur de progression: <appli retrolection>/text-files/progression.txt
+L'indicateur de progression de la console: <appli retrolection>/text-files/progression-console.txt
+L'indicateur de progression totale Retrolection: <appli retrolection>/text-files/progression-total.txt
 Nom du viewer don: <appli retrolection>/text-files/viewer-don.txt
 Nom du viewer sub: <appli retrolection>/text-files/viewer-sub.txt
 Défi don: <appli retrolection>/text-files/challenge-don.txt

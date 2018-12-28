@@ -1,4 +1,5 @@
 
+import os
 import time
 import configparser
 import urllib
@@ -20,6 +21,7 @@ class MainFrame(tkinter.Frame):
 		
 		self.window = window
 		self.pil_cover = None
+		self.cover_file_name = ""
 		self.timer_id = None
 		self.timer_total_reset_value = "00:00:00"
 		
@@ -27,6 +29,14 @@ class MainFrame(tkinter.Frame):
 		self.config.read("config.ini")
 		
 		self.pack(expand = tkinter.YES, fill = tkinter.BOTH)
+		
+		menu_bar = tkinter.Menu(self.window)
+		file_menu = tkinter.Menu(menu_bar, tearoff=0)
+		file_menu.add_command(label = "Open", command = self.on_menu_file_open)
+		file_menu.add_command(label = "Save", command = self.on_menu_file_save)
+		menu_bar.add_cascade(label = "File", menu = file_menu)
+		
+		self.window.config(menu = menu_bar)
 		
 		self.frame_left = tkinter.Frame(self, width = 300)
 		self.frame_left.pack_propagate(False)
@@ -86,10 +96,15 @@ class MainFrame(tkinter.Frame):
 		self.combo_games.pack(padx = 5, pady = 5, fill = tkinter.X)
 		self.combo_games.bind("<<ComboboxSelected>>", self.on_combo_games_changed)
 		
-		label = tkinter.Label(self.frame_sheet_labels, text = "Progression: ")
+		label = tkinter.Label(self.frame_sheet_labels, text = "Progression console: ")
 		label.pack(anchor = tkinter.W, padx = 5, pady = 5)
-		self.label_progress = tkinter.Label(self.frame_sheet_values)
-		self.label_progress.pack(anchor = tkinter.W, padx = 5, pady = 5)
+		self.label_progress_console = tkinter.Label(self.frame_sheet_values)
+		self.label_progress_console.pack(anchor = tkinter.W, padx = 5, pady = 5)
+		
+		label = tkinter.Label(self.frame_sheet_labels, text = "Progression totale: ")
+		label.pack(anchor = tkinter.W, padx = 5, pady = 5)
+		self.label_progress_total = tkinter.Label(self.frame_sheet_values)
+		self.label_progress_total.pack(anchor = tkinter.W, padx = 5, pady = 5)
 		
 		label = tkinter.Label(self.frame_sheet_labels, text = "Viewer sub: ")
 		label.pack(anchor = tkinter.W, padx = 5, pady = 5)
@@ -137,12 +152,23 @@ class MainFrame(tkinter.Frame):
 		self.canvas_cover.pack(expand = tkinter.YES, fill = tkinter.BOTH)
 		self.canvas_cover.bind("<Configure>", self.canvas_cover_configure)
 		
+	def on_menu_file_open(self):
+		file_name = tkinter.filedialog.askopenfilename(defaultextension = "*.rcx", filetypes = [("Retrolection context files", "*.rcx")])
+		if len(file_name) >= 1:
+			self.load_context(file_name)
+			
+	def on_menu_file_save(self):
+		file_name = tkinter.filedialog.asksaveasfilename(defaultextension = "*.rcx", filetypes = [("Retrolection context files", "*.rcx")])
+		if len(file_name) >= 1:
+			self.save_context(file_name)
+			
 	def canvas_cover_configure(self, event):
 		self.refresh_cover(event.width, event.height)
 		
 	def on_update_xsplit_click(self):
 		self.write_file("w", "text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()])
-		self.write_file("w", "text-files/progression.txt", self.label_progress.cget("text"))
+		self.write_file("w", "text-files/progression-console.txt", self.label_progress_console.cget("text"))
+		self.write_file("w", "text-files/progression-total.txt", self.label_progress_total.cget("text"))
 		self.write_file("w", "text-files/viewer-sub.txt", self.label_viewer_sub.cget("text"))
 		self.write_file("w", "text-files/viewer-don.txt", self.label_viewer_don.cget("text"))
 		self.write_file("w", "text-files/challenge-sub.txt", self.label_challenge_sub.cget("text"))
@@ -157,7 +183,11 @@ class MainFrame(tkinter.Frame):
 		
 	def on_cover_load_click(self):
 		file_name = tkinter.filedialog.askopenfilename()
+		self.load_cover(file_name)
+		
+	def load_cover(self, file_name):
 		if file_name:
+			self.cover_file_name = file_name
 			try:
 				self.pil_cover = PIL.Image.open(file_name)
 			except:
@@ -278,7 +308,7 @@ class MainFrame(tkinter.Frame):
 		
 	def process_on_combo_consoles_changed(self):
 		self.fill_games()
-		self.fill_progress()
+		self.fill_progress_console()
 		
 	def process_on_combo_games_changed(self):
 		self.fill_viewer_sub()
@@ -323,12 +353,31 @@ class MainFrame(tkinter.Frame):
 		
 		self.process_on_combo_games_changed()
 		
-	def fill_progress(self):
+	def fill_progress_console(self):
 		console = self.combo_consoles.cget("values")[self.combo_consoles.current()]
 		cell_range = self.config["SHEET"]["PROGRESSION_CELL_RANGE"]
 		sheet_values = self.get_sheet_values(console, cell_range)
 		
-		self.label_progress.config(text = sheet_values[0][0] + "/" + sheet_values[0][2])
+		self.label_progress_console.config(text = sheet_values[0][0] + "/" + sheet_values[0][2])
+		
+	def fill_progress_total(self):
+		consoles = self.combo_consoles.cget("values")
+		
+		ranges = ""
+		for c in consoles:
+			ranges += "&ranges=" + urllib.parse.quote(c) + "!" + self.config["SHEET"]["PROGRESSION_CELL_RANGE"]
+			
+		url = "https://sheets.googleapis.com/v4/spreadsheets/" + self.config["SHEET"]["SPREAD_SHEET_ID"] + "/values:batchGet?key=" + self.config["SHEET"]["API_KEY"] + ranges;
+		
+		data = self.get_json(url)
+		
+		number_of_games_completed = 0
+		number_of_games_total = 0
+		for v in data["valueRanges"]:
+			number_of_games_completed += int(v["values"][0][0])
+			number_of_games_total += int(v["values"][0][2])
+			
+		self.label_progress_total.config(text = str(number_of_games_completed) + '/' + str(number_of_games_total))
 		
 	def fill_viewer_sub(self):
 		console = self.combo_consoles.cget("values")[self.combo_consoles.current()]
@@ -452,15 +501,73 @@ class MainFrame(tkinter.Frame):
 				nb_retries += 1
 				time.sleep(0.01)
 				
+	def get_combo_value(self, combo):
+		value = ""
+		current_index = combo.current()
+		values = combo.cget("values")
+		if current_index >= 0 and current_index < len(values):
+			value = values[current_index]
+		return value
+		
+	def select_combo_value(self, combo, value):
+		values = combo.cget("values")
+		
+		i = 0
+		for v in values:
+			if v == value:
+				combo.current(i)
+				return True
+			i += 1
+			
+		return False
+		
+	def load(self):
+		self.fill_consoles()
+		self.fill_progress_total()
+		self.load_context("context.sav")
+		
+	def load_context(self, file_name):
+		if os.path.exists(file_name):
+			config = configparser.ConfigParser()
+			config.read(file_name)
+			
+			if self.select_combo_value(self.combo_consoles, config["CONTEXT"]["console"]):
+				self.process_on_combo_consoles_changed()
+				
+				if self.select_combo_value(self.combo_games, config["CONTEXT"]["game"]):
+					self.process_on_combo_games_changed()
+					
+					self.load_cover(config["CONTEXT"]["cover"])
+					
+	def save_context(self, file_name):
+		config = configparser.ConfigParser()
+		
+		config["CONTEXT"] = {
+			"console": self.get_combo_value(self.combo_consoles),
+			"game": self.get_combo_value(self.combo_games),
+			"cover": self.cover_file_name,
+		}
+		
+		with open(file_name, "w") as f:
+			config.write(f)
+		
+	def on_close(self):
+		self.save_context("context.sav")
+		try:
+			self.window.destroy()
+		except:
+			pass
+			
 def main():
 	window = tkinter.Tk()
 	window.title("Retrolection")
 	window.geometry("800x600")
 	window.geometry(("+" + str(int((window.winfo_screenwidth() - 800) / 2)) + "+"+ str(int((window.winfo_screenheight() - 600) / 2))))
 	f = MainFrame(window)
+	window.protocol("WM_DELETE_WINDOW", f.on_close)
 	icon = tkinter.PhotoImage(file = "resources/icon.png")
 	window.tk.call("wm", "iconphoto", window._w, icon)
-	window.after(1, f.fill_consoles)
+	window.after(1, f.load)
 	window.mainloop()
 	
 if __name__ == "__main__":
