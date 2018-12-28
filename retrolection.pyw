@@ -315,7 +315,7 @@ class MainFrame(tkinter.Frame):
 		
 		if sheet_values:
 			for v in sheet_values:
-				if v[0] and v[0] != "":
+				if len(v) >= 1 and v[0] and v[0] != "":
 					values.append(v[0])
 					
 		self.combo_games.config(values = values)
