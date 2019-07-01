@@ -8,7 +8,9 @@ https://www.python.org/downloads/
 pip install Pillow
 ```
 
-3. Modifier le fichier config.ini pour renseigner la clé API (la méthode pour obtenir une clé API est détaillée ici: https://github.com/ThorAsgardDev/xsplit_retrolection_extension)
+3. Modifier le fichier config.ini pour renseigner les valeurs:
+   - GDOC_API_KEY (la méthode pour obtenir une clé API est détaillée ici: https://github.com/ThorAsgardDev/xsplit_retrolection_extension)
+   - IGDB_API_KEY (s'inscrire gratuitement ici: https://api.igdb.com/)
 
 4. Double cliquer sur le fichier "retrolection.pyw"
 
