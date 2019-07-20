@@ -43,30 +43,8 @@ class GamesDbClient:
 		"Xbox": [14],
 	}
 	
-	# IGDB Get platforms id (use list_igdb_platforms method from this class)
-	RETROLECTION_PLATFORM_LABEL_TO_IGDB_ID = {
-		"Dreamcast": [23],
-		"GameBoy": [33],
-		"GameBoyAdvance": [24],
-		"GameBoyColor": [22],
-		"GameCube": [21],
-		"GameGear": [35],
-		"MasterSystem": [64],
-		"Megadrive": [29],
-		"Nes": [18],
-		"Nintendo64": [4],
-		"PC GOG": [6],
-		"PC Windows": [6],
-		"Playstation": [7],
-		"Playstation2": [8],
-		"Saturn": [32],
-		"SuperNes": [19],
-		"Xbox": [11],
-	}
-	
-	def __init__(self, the_games_db_api_key, igdb_api_key):
+	def __init__(self, the_games_db_api_key):
 		self.the_games_db_api_key = the_games_db_api_key
-		self.igdb_api_key = igdb_api_key
 		self.the_game_db_developers = self.list_the_game_db_developers()
 		self.the_game_db_publishers = self.list_the_game_db_publishers()
 		
@@ -81,23 +59,6 @@ class GamesDbClient:
 			return
 		return response.json()
 		
-	def send_igdb_request(self, path, data):
-		headers = {
-			"user-key": self.igdb_api_key,
-			"Accept": "application/json",
-		}
-		url = "https://api-v3.igdb.com" + path
-		response = requests.post(url, headers = headers, data = data)
-		if response.status_code != 200:
-			print("BAD STATUS: " + response)
-			return
-		return response.json()
-		
-	def list_igdb_platforms(self):
-		for i in range(5):
-			data = "fields name; limit 50; offset " + str(i * 50) + ";"
-			print(self.send_igdb_request("/platforms", data))
-			
 	def list_the_game_db_developers(self):
 		response = self.send_the_games_db_request("/Developers")
 		if not response:
@@ -199,66 +160,4 @@ class GamesDbClient:
 			print("Unexpected error: ", traceback.format_exc())
 			
 		return info
-			
-	def get_platform_info(self, retrolection_platform_label):
-		info = {}
 		
-		id = GamesDbClient.RETROLECTION_PLATFORM_LABEL_TO_THE_GAMES_DB_ID[retrolection_platform_label][0]
-		param = {
-			"id": id,
-			"fields": "manufacturer,media,cpu,memory,graphics,sound,maxcontrollers,display,youtube",
-		}
-		response = self.send_the_games_db_request("/Platforms/ByPlatformID", param)
-		if not response:
-			return
-		platform = response["data"]["platforms"][str(id)]
-		
-		info["name"] = ""
-		info["manufacturer"] = ""
-		info["media"] = ""
-		info["cpu"] = ""
-		info["memory"] = ""
-		info["graphics"] = ""
-		info["sound"] = ""
-		info["max_controllers"] = ""
-		info["display"] = ""
-		info["release_date_japan"] = ""
-		info["release_date_us"] = ""
-		info["release_date_eu"] = ""
-		
-		if platform["name"]:
-			info["name"] = platform["name"]
-		if platform["manufacturer"]:
-			info["manufacturer"] = platform["manufacturer"]
-		if platform["media"]:
-			info["media"] = platform["media"]
-		if platform["cpu"]:
-			info["cpu"] = platform["cpu"]
-		if platform["memory"]:
-			info["memory"] = platform["memory"]
-		if platform["graphics"]:
-			info["graphics"] = platform["graphics"]
-		if platform["sound"]:
-			info["sound"] = platform["sound"]
-		if platform["maxcontrollers"]:
-			info["max_controllers"] = platform["maxcontrollers"]
-		if platform["display"]:
-			info["display"] = platform["display"]
-			
-		data = "fields versions.platform_version_release_dates.*; where id = " + str(GamesDbClient.RETROLECTION_PLATFORM_LABEL_TO_IGDB_ID[retrolection_platform_label][0]) + "; sort versions.platform_version_release_dates.date;"
-		response = self.send_igdb_request("/platforms", data)
-		if not response:
-			return
-		platform_version_release_dates = response[0]["versions"][0]["platform_version_release_dates"]
-		for platform_version_release_date in platform_version_release_dates:
-			if "region" in platform_version_release_date:
-				region = platform_version_release_date["region"]
-				date = platform_version_release_date["human"]
-				if region == 1: # Europe
-					info["release_date_eu"] = date
-				elif region == 2: # US
-					info["release_date_us"] = date
-				elif region == 5: # Japan
-					info["release_date_japan"] = date
-				
-		return info
