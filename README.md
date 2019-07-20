@@ -61,4 +61,4 @@ Dans la configuration de la source, cocher la case "Auto-refresh images" et ajou
 <appli retrolection>/img-files/cover.png
 ```
 
-La jaquette sera mise à jour lors d'un clique sur le bouton "Envoyer les valeurs vers XSplit"
+La jaquette et toutes les valeurs seront mises à jour lors d'un clique sur le bouton "Démarrer"
