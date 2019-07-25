@@ -112,6 +112,7 @@ class MainFrame(tkinter.Frame):
 		
 		self.combo_consoles = self.create_combo(frame_sheet_labels, frame_sheet_values, "Consoles: ", self.on_combo_consoles_changed)
 		self.combo_games = self.create_combo(frame_sheet_labels, frame_sheet_values, "Jeux: ", self.on_combo_games_changed)
+		self.entry_game_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe nom du jeu: ")
 		self.label_progression_console = self.create_label(frame_sheet_labels, frame_sheet_values, "Progression console: ")
 		self.label_progression_total = self.create_label(frame_sheet_labels, frame_sheet_values, "Progression totale: ")
 		self.label_viewer_sub = self.create_label(frame_sheet_labels, frame_sheet_values, "Viewer sub: ")
@@ -155,6 +156,13 @@ class MainFrame(tkinter.Frame):
 		label_value = tkinter.Label(frame_value, anchor = tkinter.W)
 		label_value.pack(anchor = tkinter.W, padx = 2, pady = 2)
 		return label_value
+		
+	def create_entry(self, frame_label, frame_value, text):
+		label = tkinter.Label(frame_label, anchor = tkinter.W, text = text)
+		label.pack(anchor = tkinter.W, padx = 2, pady = 2)
+		entry = tkinter.Entry(frame_value)
+		entry.pack(fill = tkinter.X, padx = 2, pady = 2)
+		return entry
 		
 	def create_button(self, frame, text, on_click_cb):
 		button = tkinter.Button(frame, relief = tkinter.GROOVE, text = text, command = on_click_cb)
@@ -225,7 +233,7 @@ class MainFrame(tkinter.Frame):
 			
 	def start_run(self):
 		self.button_start_pause.config(text = "Pause")
-		self.utils.write_file("w", "text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()])
+		self.utils.write_file("w", "text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()] + self.entry_game_suffix.get())
 		self.utils.write_file("w", "text-files/progression-console.txt", self.label_progression_console.cget("text"))
 		self.utils.write_file("w", "text-files/progression-total.txt", self.label_progression_total.cget("text"))
 		self.utils.write_file("w", "text-files/viewer-sub.txt", self.label_viewer_sub.cget("text"))
@@ -600,6 +608,10 @@ class MainFrame(tkinter.Frame):
 				if "cover" in config["CONTEXT"]:
 					self.canvas_cover.load_image(config["CONTEXT"]["cover"], True, MainFrame.RESIZED_COVER_FILE_NAME)
 					
+			if "game_suffix" in config["CONTEXT"]:
+				self.entry_game_suffix.delete(0, tkinter.END)
+				self.entry_game_suffix.insert(0, config["CONTEXT"]["game_suffix"].replace("<SPACE>", " "))
+				
 		return ret
 		
 	def save_context(self, file_name):
@@ -608,6 +620,7 @@ class MainFrame(tkinter.Frame):
 		config["CONTEXT"] = {
 			"console": self.get_combo_value(self.combo_consoles),
 			"game": self.get_combo_value(self.combo_games),
+			"game_suffix": self.entry_game_suffix.get().replace(" ", "<SPACE>")
 		}
 		
 		image_path = self.canvas_cover.get_image_path()
