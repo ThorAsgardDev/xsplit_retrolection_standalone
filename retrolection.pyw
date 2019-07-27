@@ -301,7 +301,7 @@ class MainFrame(tkinter.Frame):
 			value, total = self.utils.progressStrToValues(model_console["progression"])
 			self.set_progression(self.utils.progressValuesToStr(value - 1, total))
 			
-			model_game["validation_id"] = str(value - 1)
+			model_game["validation_id"] = ""
 			
 		self.update_status()
 		self.save_game_to_sheet()
