@@ -488,6 +488,8 @@ class MainFrame(tkinter.Frame):
 		
 	def set_sheet_data_simple_values_to_model(self, data, model_games, game_start_row, field_name):
 		id = data["startRow"] - game_start_row
+		if "rowData" not in data:
+			return
 		for row_data in data["rowData"]:
 			if id >= 0 and id < len(model_games):
 				if "values" in row_data and "formattedValue" in row_data["values"][0]:
