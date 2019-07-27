@@ -28,7 +28,6 @@ class MainFrame(tkinter.Frame):
 		self.model = None
 		
 		self.timer_id = None
-		self.timer_total_reset_value = "00:00:00"
 		
 		self.config = configparser.ConfigParser()
 		self.config.read("config.ini")
@@ -64,6 +63,9 @@ class MainFrame(tkinter.Frame):
 		
 		frame_sheet_top = tkinter.Frame(frame_sheet)
 		frame_sheet_top.pack(side = tkinter.TOP, fill = tkinter.BOTH)
+		
+		frame_sheet_bottom = tkinter.Frame(frame_sheet)
+		frame_sheet_bottom.pack(side = tkinter.BOTTOM, fill = tkinter.BOTH)
 		
 		frame_run = tkinter.LabelFrame(frame_left, text = "Run")
 		frame_run.pack(side = tkinter.TOP, fill = tkinter.BOTH, padx = 5, pady = 5)
@@ -119,6 +121,9 @@ class MainFrame(tkinter.Frame):
 		self.label_viewer_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Viewer don: ")
 		self.label_challenge_sub = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi sub: ")
 		self.label_challenge_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi don: ")
+		self.create_button(frame_sheet_bottom, "Recharger Gdoc", self.on_reload_sheet_click)
+		self.create_button(frame_sheet_bottom, "Envoyer vers XSplit", self.on_send_to_xsplit_click)
+		self.label_status = self.create_label(frame_run_labels, frame_run_values, "Statut: ")
 		self.label_timer_game = self.create_label(frame_run_labels, frame_run_values, "Temps: ")
 		self.label_timer_total = self.create_label(frame_run_labels, frame_run_values, "Total Retrolection: ")
 		self.button_start_pause = self.create_button(frame_run_bottom, "Démarrer", self.on_start_pause_click)
@@ -207,9 +212,8 @@ class MainFrame(tkinter.Frame):
 		self.canvas_cover.load_image(file_name, True, MainFrame.RESIZED_COVER_FILE_NAME)
 		
 	def set_game_model_value(self, value_label, value):
-		model_games = self.model["consoles"][self.get_combo_value(self.combo_consoles)]["games"]
-		current_game_index = self.combo_games.current()
-		model_games[current_game_index][value_label] = value
+		model_games = self.model["consoles"][self.model["current_console"]]["games"]
+		model_games[self.model["current_game_index"]][value_label] = value
 		
 	def set_time(self, time_str):
 		self.set_game_model_value("timer", time_str)
@@ -221,6 +225,16 @@ class MainFrame(tkinter.Frame):
 		self.label_timer_total.config(text = time_str)
 		self.utils.write_file("w", "text-files/timer-total.txt", time_str)
 		
+	def set_progression_total(self, value):
+		self.model["progression_total"] = value
+		self.label_progression_total.config(text = value)
+		self.utils.write_file("w", "text-files/progression-total.txt", value)
+			
+	def set_progression(self, value):
+		self.model["consoles"][self.model["current_console"]]["progression"] = value
+		self.label_progression_console.config(text = value)
+		self.utils.write_file("w", "text-files/progression-console.txt", value)
+		
 	def start_timer(self):
 		if self.timer_id:
 			self.window.after_cancel(self.timer_id)
@@ -230,9 +244,15 @@ class MainFrame(tkinter.Frame):
 		if self.timer_id:
 			self.window.after_cancel(self.timer_id)
 			self.timer_id = None
+			return True
 			
-	def start_run(self):
-		self.button_start_pause.config(text = "Pause")
+		return False
+		
+	def on_reload_sheet_click(self):
+		self.pause_run(True)
+		self.reload_sheet()
+		
+	def on_send_to_xsplit_click(self):
 		self.utils.write_file("w", "text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()] + self.entry_game_suffix.get())
 		self.utils.write_file("w", "text-files/progression-console.txt", self.label_progression_console.cget("text"))
 		self.utils.write_file("w", "text-files/progression-total.txt", self.label_progression_total.cget("text"))
@@ -247,58 +267,76 @@ class MainFrame(tkinter.Frame):
 			self.utils.copy_file("default-cover.png", "img-files/cover.png")
 		else:
 			self.utils.copy_file(MainFrame.RESIZED_COVER_FILE_NAME, "img-files/cover.png")
-		
+			
+	def start_run(self):
+		self.button_start_pause.config(text = "Pause")
 		self.start_timer()
 		
-	def pause_run(self):
+	def pause_run(self, save_game_to_sheet):
 		self.button_start_pause.config(text = "Démarrer")
-		self.stop_timer()
-		
+		# If run in progress
+		if self.stop_timer() and save_game_to_sheet:
+			self.save_game_to_sheet()
+			
 	def on_start_pause_click(self):
 		if self.button_start_pause.cget("text") == "Démarrer":
 			self.start_run()
 		else:
-			self.pause_run()
-			self.save_game_to_sheet()
+			self.pause_run(True)
 		
 	def on_reset_click(self):
-		self.pause_run()
+		self.pause_run(False)
+		
+		model_console = self.model["consoles"][self.model["current_console"]]
+		model_game = model_console["games"][self.model["current_game_index"]]
+		
+		timer_total_reset_value = self.utils.timeSecToStr(self.utils.timeStrToSec(self.model["timer_total"]) - self.utils.timeStrToSec(model_game["timer"]))
+		self.set_total_time(timer_total_reset_value)
 		self.set_time("00:00:00")
-		self.set_total_time(self.timer_total_reset_value)
+		
+		if model_game["validation_id"] != "":
+			value, total = self.utils.progressStrToValues(self.model["progression_total"])
+			self.set_progression_total(self.utils.progressValuesToStr(value - 1, total))
+			
+			value, total = self.utils.progressStrToValues(model_console["progression"])
+			self.set_progression(self.utils.progressValuesToStr(value - 1, total))
+			
+			model_game["validation_id"] = str(value - 1)
+			
+		self.update_status()
 		self.save_game_to_sheet()
 		
 	def on_validate_click(self):
-		self.pause_run()
-		self.save_game_to_sheet()
+		self.pause_run(False)
 		
-		model_console = self.model["consoles"][self.get_combo_value(self.combo_consoles)]
-		model_games = model_console["games"]
-		current_game_index = self.combo_games.current()
-		model_game = model_games[current_game_index]
-		if model_game["original_timer"] == None:
+		model_console = self.model["consoles"][self.model["current_console"]]
+		model_game = model_console["games"][self.model["current_game_index"]]
+		if model_game["validation_id"] == "":
 			value, total = self.utils.progressStrToValues(self.model["progression_total"])
-			s = self.utils.progressValuesToStr(value + 1, total)
-			self.model["progression_total"] = s
-			self.label_progression_total.config(text = s)
-			self.utils.write_file("w", "text-files/progression-total.txt", s)
+			self.set_progression_total(self.utils.progressValuesToStr(value + 1, total))
 			
 			value, total = self.utils.progressStrToValues(model_console["progression"])
-			s = self.utils.progressValuesToStr(value + 1, total)
-			model_console["progression"] = s
-			self.label_progression_console.config(text = s)
-			self.utils.write_file("w", "text-files/progression-console.txt", s)
+			self.set_progression(self.utils.progressValuesToStr(value + 1, total))
 			
-			model_game["original_timer"] = model_game["timer"]
+			model_game["validation_id"] = str(value + 1)
 			
+			self.update_status()
+			
+		self.save_game_to_sheet()
+		
 	def save_game_to_sheet(self):
-		console = self.get_combo_value(self.combo_consoles)
+		console = self.model["current_console"]
 		model_games = self.model["consoles"][console]["games"]
-		current_game_index = self.combo_games.current()
+		current_game_index = self.model["current_game_index"]
 		
 		config_sheet = self.config["SHEET"]
 		sheet_name = console
 		line = str(int(config_sheet["FIRST_GAME_LINE"]) + current_game_index)
 		ranges_values = [
+			{
+				"range": sheet_name + "!" + config_sheet["VALIDATION_COLUMN"] + line + ":" + config_sheet["VALIDATION_COLUMN"] + line,
+				"values": [[model_games[current_game_index]["validation_id"]]]
+			},
 			{
 				"range": sheet_name + "!" + config_sheet["TIMER_GAME_COLUMN"] + line + ":" + config_sheet["TIMER_GAME_COLUMN"] + line,
 				"values": [[model_games[current_game_index]["timer"]]]
@@ -316,66 +354,90 @@ class MainFrame(tkinter.Frame):
 		t += 1
 		self.set_total_time(self.utils.timeSecToStr(t))
 		
+		self.update_status()
+		
 		self.timer_id = self.window.after(1000, self.update_timer)
 		
-		
-	def on_timer_reset_click(self):
-		self.label_timer_game.config(text = "00:00:00")
-		self.label_timer_total.config(text = self.timer_total_reset_value)
-		
 	def on_combo_consoles_changed(self, event):
-		self.process_on_combo_consoles_changed()
+		self.process_on_combo_consoles_changed(None)
 		
-	def fill_consoles(self):
+	def fill_consoles(self, init_values):
 		values = []
 		
 		for value in self.model["consoles"]:
 			values.append(value)
-		
+			
 		self.combo_consoles.config(values = values)
 		self.combo_consoles.current(0)
 		
-		self.process_on_combo_consoles_changed()
+		if init_values and ("console" in init_values):
+			self.select_combo_value(self.combo_consoles, init_values["console"])
+			
+		self.process_on_combo_consoles_changed(init_values)
 		
-	def process_on_combo_consoles_changed(self):
-		self.fill_games()
-		self.label_progression_console.config(text = self.model["consoles"][self.get_combo_value(self.combo_consoles)]["progression"])
-		
+	def process_on_combo_consoles_changed(self, init_values):
+		current_console = self.get_combo_value(self.combo_consoles)
+		if current_console != self.model["current_console"]:
+			self.model["current_console"] = current_console
+			self.fill_games(init_values)
+			self.label_progression_console.config(text = self.model["consoles"][current_console]["progression"])
+			
 	def on_combo_games_changed(self, event):
-		self.process_on_combo_games_changed()
+		self.process_on_combo_games_changed(None)
 		
-	def fill_games(self):
+	def fill_games(self, init_values):
 		values = []
 		
-		for value in self.model["consoles"][self.get_combo_value(self.combo_consoles)]["games"]:
+		for value in self.model["consoles"][self.model["current_console"]]["games"]:
 			values.append(value["name"])
 			
 		self.combo_games.config(values = values)
 		self.combo_games.current(0)
 		
-		self.process_on_combo_games_changed()
+		if init_values and ("game" in init_values):
+			self.select_combo_value(self.combo_games, init_values["game"])
+			
+		self.process_on_combo_games_changed(init_values)
 		
-	def process_on_combo_games_changed(self):
-		model_games = self.model["consoles"][self.get_combo_value(self.combo_consoles)]["games"]
-		current_game_index = self.combo_games.current()
+	def process_on_combo_games_changed(self, init_values):
+		current_game = self.get_combo_value(self.combo_games)
 		
-		self.label_viewer_sub.config(text = model_games[current_game_index]["viewer_sub"])
-		self.label_viewer_don.config(text = model_games[current_game_index]["viewer_don"])
-		self.label_challenge_sub.config(text = model_games[current_game_index]["challenge_sub"])
-		self.label_challenge_don.config(text = model_games[current_game_index]["challenge_don"])
-		self.label_timer_game.config(text = model_games[current_game_index]["timer"])
-		
-		self.timer_total_reset_value = self.utils.timeSecToStr(self.utils.timeStrToSec(self.model["timer_total"]) - self.utils.timeStrToSec(model_games[current_game_index]["timer"]))
-		
-		self.fill_scraper_games()
+		if current_game != self.model["current_game"]:
+			self.pause_run(True)
+			
+			self.model["current_game"] = current_game
+			current_game_index = self.combo_games.current()
+			self.model["current_game_index"] = current_game_index
+			model_games = self.model["consoles"][self.model["current_console"]]["games"]
+			
+			self.label_viewer_sub.config(text = model_games[current_game_index]["viewer_sub"])
+			self.label_viewer_don.config(text = model_games[current_game_index]["viewer_don"])
+			self.label_challenge_sub.config(text = model_games[current_game_index]["challenge_sub"])
+			self.label_challenge_don.config(text = model_games[current_game_index]["challenge_don"])
+			self.label_timer_game.config(text = model_games[current_game_index]["timer"])
+			
+			self.update_status()
+			
+			self.fill_scraper_games(init_values)
+			
+	def update_status(self):
+		model_game = self.model["consoles"][self.model["current_console"]]["games"][self.model["current_game_index"]]
+		if model_game["validation_id"] != "":
+			text = "Fait"
+		elif model_game["timer"] != "00:00:00":
+			text = "En cours"
+		else:
+			text = "A faire"
+			
+		self.label_status.config(text = text)
 		
 	def on_combo_scraper_games_changed(self, event):
-		self.process_on_combo_scraper_games_changed()
+		self.process_on_combo_scraper_games_changed(None)
 		
-	def fill_scraper_games(self):
+	def fill_scraper_games(self, init_values):
 		try:
-			console = self.get_combo_value(self.combo_consoles)
-			game = self.get_combo_value(self.combo_games)
+			console = self.model["current_console"]
+			game = self.model["current_game"]
 			
 			found_games = self.games_db_client.search_game_by_name(game, console)
 			
@@ -393,28 +455,36 @@ class MainFrame(tkinter.Frame):
 			
 			if len(values) >= 1:
 				self.combo_scraper_games.current(0)
-			
-			self.process_on_combo_scraper_games_changed()
+				
+				if init_values and ("scraper_game" in init_values):
+					self.select_combo_value(self.combo_scraper_games, init_values["scraper_game"])
+				
+			self.process_on_combo_scraper_games_changed(init_values)
 		except Exception as e:
 			print("Unexpected error: ", traceback.format_exc())
 			
-	def process_on_combo_scraper_games_changed(self):
-		image_path = None
-		if self.combo_scraper_games.current() >= 0:
-			scraper_game = self.combo_scraper_games.cget("values")[self.combo_scraper_games.current()]
+	def process_on_combo_scraper_games_changed(self, init_values):
+		current_scraper_game = self.get_combo_value(self.combo_scraper_games)
+		
+		if current_scraper_game != self.model["current_scraper_game"]:
+			self.model["current_scraper_game"] = current_scraper_game
 			
-			info = self.games_db_client.get_game_info(self.combo_scraper_games.value_to_id[scraper_game])
-			
-			self.label_scraper_game_release_date.config(text = info["release_date"])
-			players_str = str(info["players"]) + " (Co-op: " + info["coop"] + ")"
-			self.label_scraper_game_players.config(text = players_str)
-			self.label_scraper_game_alternates.config(text = info["alternates"])
-			self.label_scraper_game_developers.config(text = info["developers"])
-			self.label_scraper_game_publishers.config(text = info["publishers"])
-			
-			image_path = info["url_image"]
-			
-		self.canvas_scraper_cover.load_image(image_path, False, None)
+			image_path = None
+			if self.combo_scraper_games.current() >= 0:
+				scraper_game = self.combo_scraper_games.cget("values")[self.combo_scraper_games.current()]
+				
+				info = self.games_db_client.get_game_info(self.combo_scraper_games.value_to_id[scraper_game])
+				
+				self.label_scraper_game_release_date.config(text = info["release_date"])
+				players_str = str(info["players"]) + " (Co-op: " + info["coop"] + ")"
+				self.label_scraper_game_players.config(text = players_str)
+				self.label_scraper_game_alternates.config(text = info["alternates"])
+				self.label_scraper_game_developers.config(text = info["developers"])
+				self.label_scraper_game_publishers.config(text = info["publishers"])
+				
+				image_path = info["url_image"]
+				
+			self.canvas_scraper_cover.load_image(image_path, False, None)
 		
 	def set_sheet_data_simple_values_to_model(self, data, model_games, game_start_row, field_name):
 		id = data["startRow"] - game_start_row
@@ -476,6 +546,10 @@ class MainFrame(tkinter.Frame):
 			"timer_total": "00:00:00",
 			"progression_total": "",
 			"consoles": {},
+			"current_console": "",
+			"current_game": "",
+			"current_game_index": -1,
+			"current_scraper_game": "",
 		}
 		
 		config_sheet = self.config["SHEET"]
@@ -498,6 +572,7 @@ class MainFrame(tkinter.Frame):
 		ranges = []
 		
 		for console in model["consoles"]:
+			ranges.append(console + "!" + config_sheet["VALIDATION_COLUMN"] + first_line + ":" + config_sheet["VALIDATION_COLUMN"])
 			ranges.append(console + "!" + config_sheet["GAME_NAME_COLUMN"] + first_line + ":" + config_sheet["GAME_NAME_COLUMN"])
 			ranges.append(console + "!" + config_sheet["TIMER_GAME_COLUMN"] + first_line + ":" + config_sheet["TIMER_GAME_COLUMN"])
 			ranges.append(console + "!" + config_sheet["VIEWER_SUB_COLUMN"] + first_line + ":" + config_sheet["VIEWER_SUB_COLUMN"])
@@ -533,7 +608,7 @@ class MainFrame(tkinter.Frame):
 				if "formattedValue" in r["values"][0]:
 					model["consoles"][console]["games"].append({
 						"name": r["values"][0]["formattedValue"],
-						"original_timer": None,
+						"validation_id": "",
 						"timer": "00:00:00",
 						"viewer_sub": "",
 						"viewer_don": "",
@@ -547,8 +622,14 @@ class MainFrame(tkinter.Frame):
 				else:
 					column = 0
 					
-				if column == self.utils.sheet_a1_value_to_column_number(config_sheet["TIMER_GAME_COLUMN"]):
-					self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "original_timer")
+				if "startRow" in d:
+					row = d["startRow"]
+				else:
+					row = 0
+					
+				if row != 1 and column == self.utils.sheet_a1_value_to_column_number(config_sheet["VALIDATION_COLUMN"]):
+					self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "validation_id")
+				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["TIMER_GAME_COLUMN"]):
 					self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "timer")
 				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["VIEWER_SUB_COLUMN"]):
 					self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "viewer_sub")
@@ -585,42 +666,52 @@ class MainFrame(tkinter.Frame):
 		self.model = self.build_model()
 		self.label_timer_total.config(text = self.model["timer_total"])
 		self.label_progression_total.config(text = self.model["progression_total"])
-		self.fill_consoles()
+		init_values = self.load_context("context.sav")
+		self.fill_consoles(init_values)
 		
-		ret = self.load_context("context.sav")
+	def reload_sheet(self):
+		init_values = {}
+		init_values["console"] = self.model["current_console"]
+		init_values["game"] = self.model["current_game"]
+		init_values["scraper_game"] = self.model["current_scraper_game"]
 		
-		if ret == False:
-			self.process_on_combo_consoles_changed()
-			
+		self.model = self.build_model()
+		self.label_timer_total.config(text = self.model["timer_total"])
+		self.label_progression_total.config(text = self.model["progression_total"])
+		self.fill_consoles(init_values)
+		
 	def load_context(self, file_name):
-		ret = False
+		init_values = {}
 		if os.path.exists(file_name):
 			config = configparser.ConfigParser()
 			config.read(file_name)
 			
-			if self.select_combo_value(self.combo_consoles, config["CONTEXT"]["console"]):
-				self.process_on_combo_consoles_changed()
-				ret = True
+			if "console" in config["CONTEXT"]:
+				init_values["console"] = config["CONTEXT"]["console"].replace("<SPACE>", " ")
 				
-				if self.select_combo_value(self.combo_games, config["CONTEXT"]["game"]):
-					self.process_on_combo_games_changed()
-					
-				if "cover" in config["CONTEXT"]:
-					self.canvas_cover.load_image(config["CONTEXT"]["cover"], True, MainFrame.RESIZED_COVER_FILE_NAME)
-					
+			if "game" in config["CONTEXT"]:
+				init_values["game"] = config["CONTEXT"]["game"].replace("<SPACE>", " ")
+				
+			if "scraper_game" in config["CONTEXT"]:
+				init_values["scraper_game"] = config["CONTEXT"]["scraper_game"].replace("<SPACE>", " ")
+				
+			if "cover" in config["CONTEXT"]:
+				self.canvas_cover.load_image(config["CONTEXT"]["cover"], True, MainFrame.RESIZED_COVER_FILE_NAME)
+				
 			if "game_suffix" in config["CONTEXT"]:
 				self.entry_game_suffix.delete(0, tkinter.END)
 				self.entry_game_suffix.insert(0, config["CONTEXT"]["game_suffix"].replace("<SPACE>", " "))
 				
-		return ret
+		return init_values
 		
 	def save_context(self, file_name):
 		config = configparser.ConfigParser()
 		
 		config["CONTEXT"] = {
-			"console": self.get_combo_value(self.combo_consoles),
-			"game": self.get_combo_value(self.combo_games),
-			"game_suffix": self.entry_game_suffix.get().replace(" ", "<SPACE>")
+			"console": self.model["current_console"].replace(" ", "<SPACE>"),
+			"game": self.model["current_game"].replace(" ", "<SPACE>"),
+			"game_suffix": self.entry_game_suffix.get().replace(" ", "<SPACE>"),
+			"scraper_game": self.model["current_scraper_game"].replace(" ", "<SPACE>"),
 		}
 		
 		image_path = self.canvas_cover.get_image_path()

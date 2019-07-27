@@ -27,9 +27,10 @@ class CanvasCover():
 			self.canvas.delete("all")
 		else:
 			pil_image_resized = self.resize_image(self.pil_image, width, height)
-			self.image_object = PIL.ImageTk.PhotoImage(pil_image_resized) # reference to image must be kept to avoid garbage deletion
-			self.canvas.create_image((width // 2, height // 2), image = self.image_object)
-			
+			if pil_image_resized:
+				self.image_object = PIL.ImageTk.PhotoImage(pil_image_resized) # reference to image must be kept to avoid garbage deletion
+				self.canvas.create_image((width // 2, height // 2), image = self.image_object)
+				
 	def has_image(self):
 		if not self.pil_image:
 			return False
@@ -57,11 +58,12 @@ class CanvasCover():
 				
 			if resized_image_file_name and self.pil_image:
 				pil_image_resized = self.resize_image(self.pil_image, 400, 400)
-				pil_image_resized_width, pil_image_resized_height = pil_image_resized.size
-				image = PIL.Image.new('RGB', (400, 400), (0, 0, 0))
-				image.paste(pil_image_resized, ((400 - pil_image_resized_width) // 2, (400 - pil_image_resized_height) // 2))
-				image.save(resized_image_file_name)
-				
+				if pil_image_resized:
+					pil_image_resized_width, pil_image_resized_height = pil_image_resized.size
+					image = PIL.Image.new('RGB', (400, 400), (0, 0, 0))
+					image.paste(pil_image_resized, ((400 - pil_image_resized_width) // 2, (400 - pil_image_resized_height) // 2))
+					image.save(resized_image_file_name)
+					
 		self.refresh(self.canvas.winfo_width(), self.canvas.winfo_height())
 		
 	def resize_image(self, pil_image, width, height):
@@ -78,6 +80,8 @@ class CanvasCover():
 			new_height = height - 10
 			new_width = int(new_height * ratio_img)
 			
+		if new_width < 0 or new_height < 0:
+			return None
 		return pil_image.resize((new_width, new_height), PIL.Image.ANTIALIAS)
 		
 	def download_image(self, file_name):

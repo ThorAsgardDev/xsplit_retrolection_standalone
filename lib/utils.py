@@ -1,10 +1,14 @@
 
 import time
 import shutil
+import traceback
 
 
 class Utils():
 	
+	def print_stack(self):
+		traceback.print_stack()
+		
 	def timeStrToSec(self, t):
 		v = t.split(":")
 		
