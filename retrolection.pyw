@@ -441,25 +441,28 @@ class MainFrame(tkinter.Frame):
 			
 			found_games = self.games_db_client.search_game_by_name(game, console)
 			
-			value_to_id = {}
-			values = []
+			if found_games:
 			
-			for v in found_games:
-				values.append(v["title"])
-				value_to_id[v["title"]] = v["id"]
+				value_to_id = {}
+				values = []
 				
-			self.combo_scraper_games.set("")
-			
-			self.combo_scraper_games.value_to_id = value_to_id
-			self.combo_scraper_games.config(values = values)
-			
-			if len(values) >= 1:
-				self.combo_scraper_games.current(0)
+				for v in found_games:
+					values.append(v["title"])
+					value_to_id[v["title"]] = v["id"]
+					
+				self.combo_scraper_games.set("")
 				
-				if init_values and ("scraper_game" in init_values):
-					self.select_combo_value(self.combo_scraper_games, init_values["scraper_game"])
+				self.combo_scraper_games.value_to_id = value_to_id
+				self.combo_scraper_games.config(values = values)
 				
-			self.process_on_combo_scraper_games_changed(init_values)
+				if len(values) >= 1:
+					self.combo_scraper_games.current(0)
+					
+					if init_values and ("scraper_game" in init_values):
+						self.select_combo_value(self.combo_scraper_games, init_values["scraper_game"])
+					
+				self.process_on_combo_scraper_games_changed(init_values)
+				
 		except Exception as e:
 			print("Unexpected error: ", traceback.format_exc())
 			

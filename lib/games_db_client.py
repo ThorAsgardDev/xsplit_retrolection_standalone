@@ -49,16 +49,20 @@ class GamesDbClient:
 		self.the_game_db_publishers = self.list_the_game_db_publishers()
 		
 	def send_the_games_db_request(self, path, param = None):
-		if not param:
-			param = {}
-		param["apikey"] = self.the_games_db_api_key
-		url = "https://api.thegamesdb.net" + path + "?" + urllib.parse.urlencode(param, True)
-		response = requests.get(url)
-		if response.status_code != 200:
-			print("BAD STATUS: " + response)
+		try:
+			if not param:
+				param = {}
+			param["apikey"] = self.the_games_db_api_key
+			url = "https://api.thegamesdb.net" + path + "?" + urllib.parse.urlencode(param, True)
+			response = requests.get(url)
+			if response.status_code != 200:
+				print("BAD STATUS: " + response)
+				return
+			return response.json()
+		except Exception as e:
+			print("Unexpected error: ", traceback.format_exc())
 			return
-		return response.json()
-		
+			
 	def list_the_game_db_developers(self):
 		response = self.send_the_games_db_request("/Developers")
 		if not response:
