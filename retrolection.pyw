@@ -146,6 +146,7 @@ class MainFrame(tkinter.Frame):
 		self.canvas_scraper_cover = lib.canvas_cover.CanvasCover(frame_scraper_game_info_canvas)
 		
 		self.create_button(frame_scraper_game_info_bottom, "<< Utiliser cette jaquette", self.on_use_this_cover_click)
+		self.create_button(frame_scraper_game_info_bottom, "Sauvegarder cette jaquette", self.on_save_this_cover_click)
 		
 	def create_combo(self, frame_label, frame_value, text, on_changed_cb):
 		label = tkinter.Label(frame_label, anchor = tkinter.W, text = text)
@@ -206,6 +207,11 @@ class MainFrame(tkinter.Frame):
 	def on_use_this_cover_click(self):
 		if self.canvas_scraper_cover.download_image(MainFrame.SCRAPER_COVER_FILE_NAME):
 			self.canvas_cover.load_image(MainFrame.SCRAPER_COVER_FILE_NAME, True, MainFrame.RESIZED_COVER_FILE_NAME)
+			
+	def on_save_this_cover_click(self):
+		file_name = tkinter.filedialog.asksaveasfilename(defaultextension = "*.jpg", filetypes = [("JPEG", "*.jpg")])
+		if len(file_name) >= 1:
+			self.canvas_scraper_cover.download_image(file_name)
 			
 	def on_cover_load_click(self):
 		file_name = tkinter.filedialog.askopenfilename()
