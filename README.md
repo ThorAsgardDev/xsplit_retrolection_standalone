@@ -11,6 +11,10 @@ pip install requests
 
 3. Modifier le fichier config.ini pour renseigner les valeurs:
    - GDOC_API_KEY (la méthode pour obtenir une clé API est détaillée ici: https://github.com/ThorAsgardDev/xsplit_retrolection_extension)
+   - IGDB_API_KEY Pour obtenir la valeur:
+      - Aller sur le site https://api.igdb.com/
+      - Se logger/s'inscrire
+      - Récupérer la valeur "Key"
 
 4. Modifier le fichier config.ini pour renseigner les valeurs <CLIENT_ID> et <CLIENT_SECRET>, Voici la marche à suivre pour obtenir ces valeurs:
    1. Aller à l'adresse suivante: https://console.developers.google.com/apis/credentials

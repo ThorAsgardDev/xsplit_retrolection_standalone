@@ -10,7 +10,7 @@ import tkinter.messagebox
 import PIL.Image
 import PIL.ImageTk
 import lib.sheets_client
-import lib.games_db_client
+import lib.igdb_client
 import lib.utils
 import lib.canvas_cover
 
@@ -135,7 +135,7 @@ class MainFrame(tkinter.Frame):
 		
 		self.combo_scraper_games = self.create_combo(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Titre trouvés: ", self.on_combo_scraper_games_changed)
 		self.label_scraper_game_release_date = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Date de sortie: ")
-		self.label_scraper_game_players = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Nombre de joueurs: ")
+		self.label_scraper_game_modes = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Modes: ")
 		self.label_scraper_game_alternates = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Titre(s) alternatif(s): ")
 		self.label_scraper_game_developers = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Developpeur(s): ")
 		self.label_scraper_game_publishers = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Editeur(s): ")
@@ -439,7 +439,7 @@ class MainFrame(tkinter.Frame):
 			console = self.model["current_console"]
 			game = self.model["current_game"]
 			
-			found_games = self.games_db_client.search_game_by_name(game, console)
+			found_games = self.igdb_client.search_game_by_name(game, console)
 			
 			if found_games:
 			
@@ -476,11 +476,10 @@ class MainFrame(tkinter.Frame):
 			if self.combo_scraper_games.current() >= 0:
 				scraper_game = self.combo_scraper_games.cget("values")[self.combo_scraper_games.current()]
 				
-				info = self.games_db_client.get_game_info(self.combo_scraper_games.value_to_id[scraper_game])
+				info = self.igdb_client.get_game_info(self.combo_scraper_games.value_to_id[scraper_game])
 				
 				self.label_scraper_game_release_date.config(text = info["release_date"])
-				players_str = str(info["players"]) + " (Co-op: " + info["coop"] + ")"
-				self.label_scraper_game_players.config(text = players_str)
+				self.label_scraper_game_modes.config(text = info["modes"])
 				self.label_scraper_game_alternates.config(text = info["alternates"])
 				self.label_scraper_game_developers.config(text = info["developers"])
 				self.label_scraper_game_publishers.config(text = info["publishers"])
@@ -666,7 +665,7 @@ class MainFrame(tkinter.Frame):
 			tkinter.messagebox.showerror("Error", " File "+ MainFrame.TOKENS_FILENAME +" not found. Please run grant_permissions.bat.")
 			sys.exit()
 			
-		self.games_db_client = lib.games_db_client.GamesDbClient(self.config["DATA_BASES"]["THE_GAMES_DB_API_KEY"])
+		self.igdb_client = lib.igdb_client.IgdbClient(self.config["DATA_BASES"]["IGDB_API_KEY"])
 		self.sheets_client = lib.sheets_client.SheetsClient(self.config["SHEET"]["GDOC_API_KEY"], self.config["SHEET"]["OAUTH_CLIENT_ID"], self.config["SHEET"]["OAUTH_CLIENT_SECRET"], self.config["SHEET"]["SPREAD_SHEET_ID"], MainFrame.TOKENS_FILENAME)
 		self.model = self.build_model()
 		self.label_timer_total.config(text = self.model["timer_total"])
