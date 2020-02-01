@@ -6,21 +6,6 @@ import requests
 import urllib.parse
 
 
-MONTH_TO_STR = [
-	"Janvier",
-	"Février",
-	"Mars",
-	"Avril",
-	"Mai",
-	"Juin",
-	"Juillet",
-	"Août",
-	"Septembre",
-	"Octobre",
-	"Novembre",
-	"Décembre",
-]
-
 class IgdbClient:
 	# The list of platforms can be retrieved using:
 	# https://api-v3.igdb.com/platforms

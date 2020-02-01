@@ -3,6 +3,7 @@ import os
 import traceback
 import configparser
 import requests
+import keyboard
 import tkinter
 import tkinter.ttk
 import tkinter.filedialog
@@ -11,6 +12,7 @@ import PIL.Image
 import PIL.ImageTk
 import lib.sheets_client
 import lib.igdb_client
+import lib.thegamesdb_client
 import lib.utils
 import lib.canvas_cover
 
@@ -147,6 +149,8 @@ class MainFrame(tkinter.Frame):
 		
 		self.create_button(frame_scraper_game_info_bottom, "<< Utiliser cette jaquette", self.on_use_this_cover_click)
 		self.create_button(frame_scraper_game_info_bottom, "Sauvegarder cette jaquette", self.on_save_this_cover_click)
+		
+		keyboard.add_hotkey(self.config["HOTKEYS"]["HOTKEY_START_PAUSE"], lambda: window.after(1, self.on_start_pause_click))
 		
 	def create_combo(self, frame_label, frame_value, text, on_changed_cb):
 		label = tkinter.Label(frame_label, anchor = tkinter.W, text = text)
@@ -445,10 +449,13 @@ class MainFrame(tkinter.Frame):
 			console = self.model["current_console"]
 			game = self.model["current_game"]
 			
-			found_games = self.igdb_client.search_game_by_name(game, console)
+			found_games = self.game_db_client.search_game_by_name(game, console)
 			
-			if found_games:
+			self.combo_scraper_games.set("")
 			
+			if not found_games:
+				self.combo_scraper_games.config(values = [])
+			else:
 				value_to_id = {}
 				values = []
 				
@@ -456,8 +463,6 @@ class MainFrame(tkinter.Frame):
 					values.append(v["title"])
 					value_to_id[v["title"]] = v["id"]
 					
-				self.combo_scraper_games.set("")
-				
 				self.combo_scraper_games.value_to_id = value_to_id
 				self.combo_scraper_games.config(values = values)
 				
@@ -467,8 +472,8 @@ class MainFrame(tkinter.Frame):
 					if init_values and ("scraper_game" in init_values):
 						self.select_combo_value(self.combo_scraper_games, init_values["scraper_game"])
 					
-				self.process_on_combo_scraper_games_changed(init_values)
-				
+			self.process_on_combo_scraper_games_changed(init_values)
+			
 		except Exception as e:
 			print("Unexpected error: ", traceback.format_exc())
 			
@@ -478,18 +483,23 @@ class MainFrame(tkinter.Frame):
 		if current_scraper_game != self.model["current_scraper_game"]:
 			self.model["current_scraper_game"] = current_scraper_game
 			
-			image_path = None
-			if self.combo_scraper_games.current() >= 0:
+			if self.combo_scraper_games.current() < 0:
+				self.label_scraper_game_release_date.config(text = "")
+				self.label_scraper_game_modes.config(text = "")
+				self.label_scraper_game_alternates.config(text = "")
+				self.label_scraper_game_developers.config(text = "")
+				self.label_scraper_game_publishers.config(text = "")
+				image_path = None
+			else:
 				scraper_game = self.combo_scraper_games.cget("values")[self.combo_scraper_games.current()]
 				
-				info = self.igdb_client.get_game_info(self.combo_scraper_games.value_to_id[scraper_game])
+				info = self.game_db_client.get_game_info(self.combo_scraper_games.value_to_id[scraper_game])
 				
 				self.label_scraper_game_release_date.config(text = info["release_date"])
 				self.label_scraper_game_modes.config(text = info["modes"])
 				self.label_scraper_game_alternates.config(text = info["alternates"])
 				self.label_scraper_game_developers.config(text = info["developers"])
 				self.label_scraper_game_publishers.config(text = info["publishers"])
-				
 				image_path = info["url_image"]
 				
 			self.canvas_scraper_cover.load_image(image_path, False, None)
@@ -671,7 +681,11 @@ class MainFrame(tkinter.Frame):
 			tkinter.messagebox.showerror("Error", " File "+ MainFrame.TOKENS_FILENAME +" not found. Please run grant_permissions.bat.")
 			sys.exit()
 			
-		self.igdb_client = lib.igdb_client.IgdbClient(self.config["DATA_BASES"]["IGDB_API_KEY"])
+		if self.config["DATA_BASES"]["GAMES_DB"] == "THEGAMESDB":
+			self.game_db_client = lib.thegamesdb_client.TheGamesDbClient(self.config["DATA_BASES"]["THEGAMESDB_API_KEY"])
+		else:
+			self.game_db_client = lib.igdb_client.IgdbClient(self.config["DATA_BASES"]["IGDB_API_KEY"])
+			
 		self.sheets_client = lib.sheets_client.SheetsClient(self.config["SHEET"]["GDOC_API_KEY"], self.config["SHEET"]["OAUTH_CLIENT_ID"], self.config["SHEET"]["OAUTH_CLIENT_SECRET"], self.config["SHEET"]["SPREAD_SHEET_ID"], MainFrame.TOKENS_FILENAME)
 		self.model = self.build_model()
 		self.label_timer_total.config(text = self.model["timer_total"])

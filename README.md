@@ -7,6 +7,7 @@ https://www.python.org/downloads/
 ```
 pip install Pillow
 pip install requests
+pip install keyboard
 ```
 
 3. Modifier le fichier config.ini pour renseigner les valeurs:
