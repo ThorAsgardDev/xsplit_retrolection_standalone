@@ -15,6 +15,7 @@ import lib.igdb_client
 import lib.thegamesdb_client
 import lib.utils
 import lib.canvas_cover
+import time
 
 
 class MainFrame(tkinter.Frame):
@@ -39,7 +40,7 @@ class MainFrame(tkinter.Frame):
 		self.pack(expand = tkinter.YES, fill = tkinter.BOTH)
 		
 		menu_bar = tkinter.Menu(self.window)
-		file_menu = tkinter.Menu(menu_bar, tearoff=0)
+		file_menu = tkinter.Menu(menu_bar, tearoff = 0)
 		file_menu.add_command(label = "Open", command = self.on_menu_file_open)
 		file_menu.add_command(label = "Save", command = self.on_menu_file_save)
 		menu_bar.add_cascade(label = "File", menu = file_menu)
@@ -122,7 +123,9 @@ class MainFrame(tkinter.Frame):
 		self.label_viewer_sub = self.create_label(frame_sheet_labels, frame_sheet_values, "Viewer sub: ")
 		self.label_viewer_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Viewer don: ")
 		self.label_challenge_sub = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi sub: ")
+		self.entry_challenge_sub_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe défi sub: ")
 		self.label_challenge_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi don: ")
+		self.entry_challenge_don_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe défi don: ")
 		self.create_button(frame_sheet_bottom, "Recharger Gdoc", self.on_reload_sheet_click)
 		self.create_button(frame_sheet_bottom, "Envoyer vers XSplit", self.on_send_to_xsplit_click)
 		self.label_status = self.create_label(frame_run_labels, frame_run_values, "Statut: ")
@@ -139,8 +142,6 @@ class MainFrame(tkinter.Frame):
 		self.label_scraper_game_release_date = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Date de sortie: ")
 		self.label_scraper_game_modes = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Modes: ")
 		self.label_scraper_game_alternates = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Titre(s) alternatif(s): ")
-		self.label_scraper_game_developers = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Developpeur(s): ")
-		self.label_scraper_game_publishers = self.create_label(frame_scraper_game_info_top_labels, frame_scraper_game_info_top_values, "Editeur(s): ")
 		
 		label = tkinter.Label(frame_scraper_game_info_top_labels, anchor = tkinter.W, text = "Jaquette: ")
 		label.pack(anchor = tkinter.W)
@@ -268,8 +269,8 @@ class MainFrame(tkinter.Frame):
 		self.utils.write_file("w", "text-files/progression-total.txt", self.label_progression_total.cget("text"))
 		self.utils.write_file("w", "text-files/viewer-sub.txt", self.label_viewer_sub.cget("text"))
 		self.utils.write_file("w", "text-files/viewer-don.txt", self.label_viewer_don.cget("text"))
-		self.utils.write_file("w", "text-files/challenge-sub.txt", self.label_challenge_sub.cget("text"))
-		self.utils.write_file("w", "text-files/challenge-don.txt", self.label_challenge_don.cget("text"))
+		self.utils.write_file("w", "text-files/challenge-sub.txt", self.label_challenge_sub.cget("text") + self.entry_challenge_sub_suffix.get())
+		self.utils.write_file("w", "text-files/challenge-don.txt", self.label_challenge_don.cget("text") + self.entry_challenge_don_suffix.get())
 		self.utils.write_file("w", "text-files/timer-game.txt", self.label_timer_game.cget("text"))
 		self.utils.write_file("w", "text-files/timer-total.txt", self.label_timer_total.cget("text"))
 		
@@ -446,34 +447,35 @@ class MainFrame(tkinter.Frame):
 		
 	def fill_scraper_games(self, init_values):
 		try:
-			console = self.model["current_console"]
-			game = self.model["current_game"]
-			
-			found_games = self.game_db_client.search_game_by_name(game, console)
-			
-			self.combo_scraper_games.set("")
-			
-			if not found_games:
-				self.combo_scraper_games.config(values = [])
-			else:
-				value_to_id = {}
-				values = []
+			if self.game_db_client:
+				console = self.model["current_console"]
+				game = self.model["current_game"]
 				
-				for v in found_games:
-					values.append(v["title"])
-					value_to_id[v["title"]] = v["id"]
-					
-				self.combo_scraper_games.value_to_id = value_to_id
-				self.combo_scraper_games.config(values = values)
+				found_games = self.game_db_client.search_game_by_name(game, console)
 				
-				if len(values) >= 1:
-					self.combo_scraper_games.current(0)
+				self.combo_scraper_games.set("")
+				
+				if not found_games:
+					self.combo_scraper_games.config(values = [])
+				else:
+					value_to_id = {}
+					values = []
 					
-					if init_values and ("scraper_game" in init_values):
-						self.select_combo_value(self.combo_scraper_games, init_values["scraper_game"])
+					for v in found_games:
+						values.append(v["title"])
+						value_to_id[v["title"]] = v["id"]
+						
+					self.combo_scraper_games.value_to_id = value_to_id
+					self.combo_scraper_games.config(values = values)
 					
-			self.process_on_combo_scraper_games_changed(init_values)
-			
+					if len(values) >= 1:
+						self.combo_scraper_games.current(0)
+						
+						if init_values and ("scraper_game" in init_values):
+							self.select_combo_value(self.combo_scraper_games, init_values["scraper_game"])
+						
+				self.process_on_combo_scraper_games_changed(init_values)
+				
 		except Exception as e:
 			print("Unexpected error: ", traceback.format_exc())
 			
@@ -487,21 +489,18 @@ class MainFrame(tkinter.Frame):
 				self.label_scraper_game_release_date.config(text = "")
 				self.label_scraper_game_modes.config(text = "")
 				self.label_scraper_game_alternates.config(text = "")
-				self.label_scraper_game_developers.config(text = "")
-				self.label_scraper_game_publishers.config(text = "")
 				image_path = None
 			else:
-				scraper_game = self.combo_scraper_games.cget("values")[self.combo_scraper_games.current()]
-				
-				info = self.game_db_client.get_game_info(self.combo_scraper_games.value_to_id[scraper_game])
-				
-				self.label_scraper_game_release_date.config(text = info["release_date"])
-				self.label_scraper_game_modes.config(text = info["modes"])
-				self.label_scraper_game_alternates.config(text = info["alternates"])
-				self.label_scraper_game_developers.config(text = info["developers"])
-				self.label_scraper_game_publishers.config(text = info["publishers"])
-				image_path = info["url_image"]
-				
+				if self.game_db_client:
+					scraper_game = self.combo_scraper_games.cget("values")[self.combo_scraper_games.current()]
+					
+					info = self.game_db_client.get_game_info(self.combo_scraper_games.value_to_id[scraper_game])
+					
+					self.label_scraper_game_release_date.config(text = info["release_date"])
+					self.label_scraper_game_modes.config(text = info["modes"])
+					self.label_scraper_game_alternates.config(text = info["alternates"])
+					image_path = info["url_image"]
+					
 			self.canvas_scraper_cover.load_image(image_path, False, None)
 		
 	def set_sheet_data_simple_values_to_model(self, data, model_games, game_start_row, field_name):
@@ -612,60 +611,61 @@ class MainFrame(tkinter.Frame):
 		for sheet in sheets:
 			console = sheet["properties"]["title"]
 			
-			data = sheet["data"]
-			
-			# Find game column
-			game_data = None
-			game_start_row = None
-			for d in data:
-				if "startColumn" in d \
-				and d["startColumn"] == self.utils.sheet_a1_value_to_column_number(config_sheet["GAME_NAME_COLUMN"]):
-					game_data = d
-					game_start_row = d["startRow"]
-					break
-					
-			for r in game_data["rowData"]:
-				if "formattedValue" in r["values"][0]:
-					model["consoles"][console]["games"].append({
-						"name": r["values"][0]["formattedValue"],
-						"validation_id": "",
-						"timer": "00:00:00",
-						"viewer_sub": "",
-						"viewer_don": "",
-						"challenge_sub": "",
-						"challenge_don": "",
-					})
-					
-			for d in data:
-				if "startColumn" in d:
-					column = d["startColumn"]
-				else:
-					column = 0
-					
-				if "startRow" in d:
-					row = d["startRow"]
-				else:
-					row = 0
-					
-				if row != 1 and column == self.utils.sheet_a1_value_to_column_number(config_sheet["VALIDATION_COLUMN"]):
-					self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "validation_id")
-				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["TIMER_GAME_COLUMN"]):
-					self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "timer")
-				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["VIEWER_SUB_COLUMN"]):
-					self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "viewer_sub")
-				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["VIEWER_DON_COLUMN"]):
-					self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "viewer_don")
-				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["CHALLENGE_SUB_COLUMN"]):
-					self.set_sheet_data_challenge_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_sub")
-				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["CHALLENGE_DON_FIRST_COLUMN"]):
-					self.set_sheet_data_challenge_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_don")
-				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["PROGRESSION_CELL_RANGE"]):
-					nb_completed, nb_total = self.set_sheet_data_progression_value_to_model(d, model["consoles"][console], "progression")
-					nb_games_completed += nb_completed
-					nb_games_total += nb_total
-				elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["TIMER_TOTAL_CELL"]):
-					self.set_sheet_data_simple_value_to_model(d, model["consoles"][console], "timer_total")
-					
+			if "data" in sheet:
+				data = sheet["data"]
+				
+				# Find game column
+				game_data = None
+				game_start_row = None
+				for d in data:
+					if "startColumn" in d \
+					and d["startColumn"] == self.utils.sheet_a1_value_to_column_number(config_sheet["GAME_NAME_COLUMN"]):
+						game_data = d
+						game_start_row = d["startRow"]
+						break
+						
+				for r in game_data["rowData"]:
+					if "formattedValue" in r["values"][0]:
+						model["consoles"][console]["games"].append({
+							"name": r["values"][0]["formattedValue"],
+							"validation_id": "",
+							"timer": "00:00:00",
+							"viewer_sub": "",
+							"viewer_don": "",
+							"challenge_sub": "",
+							"challenge_don": "",
+						})
+						
+				for d in data:
+					if "startColumn" in d:
+						column = d["startColumn"]
+					else:
+						column = 0
+						
+					if "startRow" in d:
+						row = d["startRow"]
+					else:
+						row = 0
+						
+					if row != 1 and column == self.utils.sheet_a1_value_to_column_number(config_sheet["VALIDATION_COLUMN"]):
+						self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "validation_id")
+					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["TIMER_GAME_COLUMN"]):
+						self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "timer")
+					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["VIEWER_SUB_COLUMN"]):
+						self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "viewer_sub")
+					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["VIEWER_DON_COLUMN"]):
+						self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "viewer_don")
+					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["CHALLENGE_SUB_COLUMN"]):
+						self.set_sheet_data_challenge_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_sub")
+					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["CHALLENGE_DON_FIRST_COLUMN"]):
+						self.set_sheet_data_challenge_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_don")
+					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["PROGRESSION_CELL_RANGE"]):
+						nb_completed, nb_total = self.set_sheet_data_progression_value_to_model(d, model["consoles"][console], "progression")
+						nb_games_completed += nb_completed
+						nb_games_total += nb_total
+					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["TIMER_TOTAL_CELL"]):
+						self.set_sheet_data_simple_value_to_model(d, model["consoles"][console], "timer_total")
+						
 		t = 0
 		for console in model["consoles"]:
 			t += self.utils.timeStrToSec(model["consoles"][console]["timer_total"])
@@ -681,17 +681,34 @@ class MainFrame(tkinter.Frame):
 			tkinter.messagebox.showerror("Error", " File "+ MainFrame.TOKENS_FILENAME +" not found. Please run grant_permissions.bat.")
 			sys.exit()
 			
+		self.game_db_client = None
 		if self.config["DATA_BASES"]["GAMES_DB"] == "THEGAMESDB":
+			st = time.time()
 			self.game_db_client = lib.thegamesdb_client.TheGamesDbClient(self.config["DATA_BASES"]["THEGAMESDB_API_KEY"])
-		else:
+			print(time.time(), "load game_db_client init (ms): ", (time.time() - st) * 1000)
+		elif self.config["DATA_BASES"]["GAMES_DB"] == "IGDB":
+			st = time.time()
 			self.game_db_client = lib.igdb_client.IgdbClient(self.config["DATA_BASES"]["IGDB_API_KEY"])
+			print(time.time(), "load igdb_client init (ms): ", (time.time() - st) * 1000)
 			
+		st = time.time()
 		self.sheets_client = lib.sheets_client.SheetsClient(self.config["SHEET"]["GDOC_API_KEY"], self.config["SHEET"]["OAUTH_CLIENT_ID"], self.config["SHEET"]["OAUTH_CLIENT_SECRET"], self.config["SHEET"]["SPREAD_SHEET_ID"], MainFrame.TOKENS_FILENAME)
+		print(time.time(), "load sheets_client init (ms): ", (time.time() - st) * 1000)
+		
+		st = time.time()
 		self.model = self.build_model()
+		print(time.time(), "load build_model (ms): ", (time.time() - st) * 1000)
+		
 		self.label_timer_total.config(text = self.model["timer_total"])
 		self.label_progression_total.config(text = self.model["progression_total"])
+		
+		st = time.time()
 		init_values = self.load_context("context.sav")
+		print(time.time(), "load load_context (ms): ", (time.time() - st) * 1000)
+		
 		self.fill_consoles(init_values)
+		st = time.time()
+		print(time.time(), "load fill_consoles (ms): ", (time.time() - st) * 1000)
 		
 	def reload_sheet(self):
 		init_values = {}
@@ -726,6 +743,14 @@ class MainFrame(tkinter.Frame):
 				self.entry_game_suffix.delete(0, tkinter.END)
 				self.entry_game_suffix.insert(0, config["CONTEXT"]["game_suffix"].replace("<SPACE>", " "))
 				
+			if "challenge_sub_suffix" in config["CONTEXT"]:
+				self.entry_challenge_sub_suffix.delete(0, tkinter.END)
+				self.entry_challenge_sub_suffix.insert(0, config["CONTEXT"]["challenge_sub_suffix"].replace("<SPACE>", " "))
+				
+			if "challenge_don_suffix" in config["CONTEXT"]:
+				self.entry_challenge_don_suffix.delete(0, tkinter.END)
+				self.entry_challenge_don_suffix.insert(0, config["CONTEXT"]["challenge_don_suffix"].replace("<SPACE>", " "))
+				
 		return init_values
 		
 	def save_context(self, file_name):
@@ -735,6 +760,8 @@ class MainFrame(tkinter.Frame):
 			"console": self.model["current_console"].replace(" ", "<SPACE>"),
 			"game": self.model["current_game"].replace(" ", "<SPACE>"),
 			"game_suffix": self.entry_game_suffix.get().replace(" ", "<SPACE>"),
+			"challenge_sub_suffix": self.entry_challenge_sub_suffix.get().replace(" ", "<SPACE>"),
+			"challenge_don_suffix": self.entry_challenge_don_suffix.get().replace(" ", "<SPACE>"),
 			"scraper_game": self.model["current_scraper_game"].replace(" ", "<SPACE>"),
 		}
 		
@@ -755,8 +782,8 @@ class MainFrame(tkinter.Frame):
 def main():
 	window = tkinter.Tk()
 	window.title("Retrolection")
-	window.geometry("1050x600")
-	window.geometry(("+" + str(int((window.winfo_screenwidth() - 1050) / 2)) + "+"+ str(int((window.winfo_screenheight() - 600) / 2))))
+	window.geometry("1050x650")
+	window.geometry(("+" + str(int((window.winfo_screenwidth() - 1050) / 2)) + "+"+ str(int((window.winfo_screenheight() - (650 + 50)) / 2))))
 	f = MainFrame(window)
 	window.protocol("WM_DELETE_WINDOW", f.on_close)
 	icon = tkinter.PhotoImage(file = "resources/icon.png")

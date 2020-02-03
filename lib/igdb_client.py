@@ -77,7 +77,7 @@ class IgdbClient:
 		
 	def get_game_info(self, id):
 		info = {}
-		data = 'fields name, alternative_names.name, game_modes.name, cover.image_id, first_release_date, involved_companies.company.name, involved_companies.developer, involved_companies.publisher; where id = ' + str(id) + ';'
+		data = 'fields name, alternative_names.name, game_modes.name, cover.image_id, first_release_date, involved_companies.company.name; where id = ' + str(id) + ';'
 		response = self.send_request("/games", data)
 		if not response:
 			return
@@ -106,23 +106,6 @@ class IgdbClient:
 						alternates += ", "
 					alternates += v["name"].replace("\n", " ")
 		info["alternates"] = alternates
-		
-		developers = ""
-		publishers = ""
-		if ("involved_companies" in game) and game["involved_companies"]:
-			for v in game["involved_companies"]:
-				if v["company"] and v["company"]["name"]:
-					if v["developer"] == True:
-						if developers != "":
-							developers += ", "
-						developers += v["company"]["name"]
-					elif v["publisher"] == True:
-						if publishers != "":
-							publishers += ", "
-						publishers += v["company"]["name"]
-					
-		info["developers"] = developers
-		info["publishers"] = publishers
 		
 		info["url_image"] = None
 		if ("cover" in game) and game["cover"] and game["cover"]["image_id"]:

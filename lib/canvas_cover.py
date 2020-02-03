@@ -5,6 +5,7 @@ import PIL.Image
 import PIL.ImageTk
 import requests
 import tkinter.messagebox
+import time
 
 
 class CanvasCover():
@@ -40,6 +41,7 @@ class CanvasCover():
 		return self.image_path
 		
 	def load_image(self, image_path, is_local, resized_image_file_name):
+		st = time.time()
 		self.image_path = image_path
 		self.pil_image = None
 		self.image_object = None
@@ -64,7 +66,10 @@ class CanvasCover():
 					image.paste(pil_image_resized, ((400 - pil_image_resized_width) // 2, (400 - pil_image_resized_height) // 2))
 					image.save(resized_image_file_name)
 					
+		print(time.time(), "load_image (ms): ", (time.time() - st) * 1000)
+		st = time.time()
 		self.refresh(self.canvas.winfo_width(), self.canvas.winfo_height())
+		print(time.time(), "refresh canvas (ms): ", (time.time() - st) * 1000)
 		
 	def resize_image(self, pil_image, width, height):
 		img_width, img_height = pil_image.size

@@ -85,7 +85,8 @@ class SheetsClient():
 	def get_values(self, ranges):
 		param = {
 			"ranges": ranges,
-			"includeGridData": True,
+			"fields": "properties.title,sheets(properties,data.startColumn,data.startRow,data.rowData.values(formattedValue,userEnteredFormat))",
+			# "includeGridData": True,
 		}
 		return self.get_request("", param)
 		

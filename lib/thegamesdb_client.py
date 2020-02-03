@@ -4,6 +4,7 @@ import traceback
 import datetime
 import requests
 import urllib.parse
+import time
 
 
 class TheGamesDbClient:
@@ -30,8 +31,6 @@ class TheGamesDbClient:
 	
 	def __init__(self, api_key):
 		self.api_key = api_key
-		self.developers = self.list_developers()
-		self.publishers = self.list_publishers()
 		
 	def send_request(self, path, param = None):
 		try:
@@ -48,25 +47,15 @@ class TheGamesDbClient:
 			print("Unexpected error: ", traceback.format_exc())
 			return
 			
-	def list_developers(self):
-		response = self.send_request("/Developers")
-		if not response:
-			return
-		return response["data"]["developers"]
-		
-	def list_publishers(self):
-		response = self.send_request("/Publishers")
-		if not response:
-			return
-		return response["data"]["publishers"]
-		
 	def search_game_by_name(self, name, retrolection_platform_label):
+		st = time.time()
 		games = []
 		param = {
 			"name": name,
 			"filter[platform][]": TheGamesDbClient.RETROLECTION_PLATFORM_LABEL_TO_THEGAMESDB_ID[retrolection_platform_label],
 		}
 		response = self.send_request("/Games/ByGameName", param)
+		print(time.time(), "search_game_by_name (ms): ", (time.time() - st) * 1000)
 		if not response:
 			return
 		found_games = response["data"]["games"]
@@ -80,13 +69,15 @@ class TheGamesDbClient:
 		return games
 		
 	def get_game_info(self, id):
+		st = time.time()
 		info = {}
 		param = {
 			"id": id,
-			"fields": "players,publishers,genres,coop,alternates",
+			"fields": "players,genres,coop,alternates",
 			"include": "boxart",
 		}
 		response = self.send_request("/Games/ByGameID", param)
+		print(time.time(), "get_game_info (ms): ", (time.time() - st) * 1000)
 		if not response:
 			return
 			
@@ -100,7 +91,7 @@ class TheGamesDbClient:
 			
 		modes = ""
 		if game["players"]:
-			modes += str(game["players"]) + " joureur(s)"
+			modes += str(game["players"]) + " joueur(s)"
 		if game["coop"]:
 			if modes != "":
 				modes += ", "
@@ -115,28 +106,6 @@ class TheGamesDbClient:
 				alternates += v
 		info["alternates"] = alternates
 		
-		info["developers"] = ""
-		info["publishers"] = ""
-		
-		try:
-			developers = ""
-			if game["developers"]:
-				for v in game["developers"]:
-					if developers != "":
-						developers += ", "
-				developers += self.developers[str(v)]["name"]
-			info["developers"] = developers
-			
-			publishers = ""
-			if game["publishers"]:
-				for v in game["publishers"]:
-					if publishers != "":
-						publishers += ", "
-				publishers += self.publishers[str(v)]["name"]
-			info["publishers"] = publishers
-		except Exception as e:
-			print("Unexpected error: ", traceback.format_exc())
-			
 		try:
 			boxart = response["include"]["boxart"]
 			boxart_data = boxart["data"][str(id)]
