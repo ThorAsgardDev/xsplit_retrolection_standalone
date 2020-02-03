@@ -211,7 +211,7 @@ class MainFrame(tkinter.Frame):
 			
 	def on_use_this_cover_click(self):
 		if self.canvas_scraper_cover.download_image(MainFrame.SCRAPER_COVER_FILE_NAME):
-			self.canvas_cover.load_image(MainFrame.SCRAPER_COVER_FILE_NAME, True, MainFrame.RESIZED_COVER_FILE_NAME)
+			self.canvas_cover.load_image(MainFrame.SCRAPER_COVER_FILE_NAME, None, True, MainFrame.RESIZED_COVER_FILE_NAME)
 			
 	def on_save_this_cover_click(self):
 		file_name = tkinter.filedialog.asksaveasfilename(defaultextension = "*.jpg", filetypes = [("JPEG", "*.jpg")])
@@ -220,7 +220,7 @@ class MainFrame(tkinter.Frame):
 			
 	def on_cover_load_click(self):
 		file_name = tkinter.filedialog.askopenfilename()
-		self.canvas_cover.load_image(file_name, True, MainFrame.RESIZED_COVER_FILE_NAME)
+		self.canvas_cover.load_image(file_name, None, True, MainFrame.RESIZED_COVER_FILE_NAME)
 		
 	def set_game_model_value(self, value_label, value):
 		model_games = self.model["consoles"][self.model["current_console"]]["games"]
@@ -489,7 +489,8 @@ class MainFrame(tkinter.Frame):
 				self.label_scraper_game_release_date.config(text = "")
 				self.label_scraper_game_modes.config(text = "")
 				self.label_scraper_game_alternates.config(text = "")
-				image_path = None
+				image_original_path = None
+				image_thumb_path = None
 			else:
 				if self.game_db_client:
 					scraper_game = self.combo_scraper_games.cget("values")[self.combo_scraper_games.current()]
@@ -499,9 +500,10 @@ class MainFrame(tkinter.Frame):
 					self.label_scraper_game_release_date.config(text = info["release_date"])
 					self.label_scraper_game_modes.config(text = info["modes"])
 					self.label_scraper_game_alternates.config(text = info["alternates"])
-					image_path = info["url_image"]
+					image_original_path = info["url_image"]
+					image_thumb_path = info["url_image_thumb"]
 					
-			self.canvas_scraper_cover.load_image(image_path, False, None)
+			self.canvas_scraper_cover.load_image(image_original_path, image_thumb_path, False, None)
 		
 	def set_sheet_data_simple_values_to_model(self, data, model_games, game_start_row, field_name):
 		id = data["startRow"] - game_start_row
@@ -737,7 +739,7 @@ class MainFrame(tkinter.Frame):
 				init_values["scraper_game"] = config["CONTEXT"]["scraper_game"].replace("<SPACE>", " ")
 				
 			if "cover" in config["CONTEXT"]:
-				self.canvas_cover.load_image(config["CONTEXT"]["cover"], True, MainFrame.RESIZED_COVER_FILE_NAME)
+				self.canvas_cover.load_image(config["CONTEXT"]["cover"], None, True, MainFrame.RESIZED_COVER_FILE_NAME)
 				
 			if "game_suffix" in config["CONTEXT"]:
 				self.entry_game_suffix.delete(0, tkinter.END)

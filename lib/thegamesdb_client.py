@@ -116,6 +116,7 @@ class TheGamesDbClient:
 					break
 			if filename:
 				boxart_base_url = boxart["base_url"]
+				info["url_image_thumb"] = boxart_base_url["thumb"] + filename
 				info["url_image"] = boxart_base_url["original"] + filename
 		except Exception as e:
 			print("Unexpected error: ", traceback.format_exc())

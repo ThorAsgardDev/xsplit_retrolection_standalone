@@ -109,6 +109,7 @@ class IgdbClient:
 		
 		info["url_image"] = None
 		if ("cover" in game) and game["cover"] and game["cover"]["image_id"]:
+			info["url_image_thumb"] = "https://images.igdb.com/igdb/image/upload/t_1080p/" + game["cover"]["image_id"] + ".jpg"
 			info["url_image"] = "https://images.igdb.com/igdb/image/upload/t_1080p/" + game["cover"]["image_id"] + ".jpg"
 			
 		return info
