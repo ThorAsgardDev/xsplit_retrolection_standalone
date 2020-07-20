@@ -1,5 +1,6 @@
 
 import os
+import sys
 import traceback
 import configparser
 import requests
@@ -793,6 +794,24 @@ def main():
 	window.after(1, f.load)
 	window.mainloop()
 	
+
+class Logger(object):
+	def __init__(self, filename = "logs.txt"):
+		self.terminal = sys.stdout
+		self.log = open(filename, "w")
+		
+	def write(self, message):
+		self.terminal.write(message)
+		self.log.write(message)
+		self.log.flush()
+		
+	def flush(self):
+		self.terminal.flush()
+		self.log.flush()
+		
 if __name__ == "__main__":
+	logger = Logger()
+	sys.stdout = logger
+	sys.stderr = logger
 	main()
 	
