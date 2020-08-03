@@ -628,7 +628,8 @@ class MainFrame(tkinter.Frame):
 						break
 						
 				for r in game_data["rowData"]:
-					if "formattedValue" in r["values"][0]:
+					if "values" in r \
+					and "formattedValue" in r["values"][0]:
 						model["consoles"][console]["games"].append({
 							"name": r["values"][0]["formattedValue"],
 							"validation_id": "",
@@ -802,7 +803,7 @@ class Logger(object):
 		
 	def write(self, message):
 		self.terminal.write(message)
-		self.log.write(message)
+		# self.log.write(message)
 		self.log.flush()
 		
 	def flush(self):
