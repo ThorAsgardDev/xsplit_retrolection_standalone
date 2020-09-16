@@ -59,7 +59,7 @@ class MainFrame(tkinter.Frame):
 		frame_cover = tkinter.LabelFrame(self, text = "Jaquette")
 		frame_cover.pack(side = tkinter.RIGHT, expand = tkinter.YES, fill = tkinter.BOTH, padx = 5, pady = 5)
 		
-		frame_logo = tkinter.Frame(frame_left)
+		frame_logo = tkinter.Frame(frame_right)
 		frame_logo.pack(side = tkinter.BOTTOM, fill = tkinter.BOTH)
 		
 		frame_sheet = tkinter.LabelFrame(frame_left, text = "Gdoc")
@@ -114,7 +114,7 @@ class MainFrame(tkinter.Frame):
 		self.img_logo = PIL.ImageTk.PhotoImage(pil_img) # reference to image must be kept to avoid garbage deletion
 		canvas = tkinter.Canvas(frame_logo, width = self.img_logo.width(), height = self.img_logo.height())
 		canvas.create_image((0, 0), anchor = tkinter.NW, image = self.img_logo)
-		canvas.pack(side = tkinter.LEFT)
+		canvas.pack(side = tkinter.RIGHT)
 		
 		self.combo_consoles = self.create_combo(frame_sheet_labels, frame_sheet_values, "Consoles: ", self.on_combo_consoles_changed)
 		self.combo_games = self.create_combo(frame_sheet_labels, frame_sheet_values, "Jeux: ", self.on_combo_games_changed)
@@ -122,7 +122,9 @@ class MainFrame(tkinter.Frame):
 		self.label_progression_console = self.create_label(frame_sheet_labels, frame_sheet_values, "Progression console: ")
 		self.label_progression_total = self.create_label(frame_sheet_labels, frame_sheet_values, "Progression totale: ")
 		self.label_viewer_sub = self.create_label(frame_sheet_labels, frame_sheet_values, "Viewer sub: ")
+		self.entry_viewer_sub_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe viewer sub: ")
 		self.label_viewer_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Viewer don: ")
+		self.entry_viewer_don_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe viewer don: ")
 		self.label_challenge_sub = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi sub: ")
 		self.entry_challenge_sub_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe défi sub: ")
 		self.label_challenge_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi don: ")
@@ -173,7 +175,7 @@ class MainFrame(tkinter.Frame):
 		label = tkinter.Label(frame_label, anchor = tkinter.W, text = text)
 		label.pack(anchor = tkinter.W, padx = 2, pady = 2)
 		entry = tkinter.Entry(frame_value)
-		entry.pack(fill = tkinter.X, padx = 2, pady = 2)
+		entry.pack(fill = tkinter.X, padx = 2, pady = 3)
 		return entry
 		
 	def create_button(self, frame, text, on_click_cb):
@@ -268,8 +270,8 @@ class MainFrame(tkinter.Frame):
 		self.utils.write_file("w", "text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()] + self.entry_game_suffix.get())
 		self.utils.write_file("w", "text-files/progression-console.txt", self.label_progression_console.cget("text"))
 		self.utils.write_file("w", "text-files/progression-total.txt", self.label_progression_total.cget("text"))
-		self.utils.write_file("w", "text-files/viewer-sub.txt", self.label_viewer_sub.cget("text"))
-		self.utils.write_file("w", "text-files/viewer-don.txt", self.label_viewer_don.cget("text"))
+		self.utils.write_file("w", "text-files/viewer-sub.txt", self.label_viewer_sub.cget("text") + self.entry_viewer_sub_suffix.get())
+		self.utils.write_file("w", "text-files/viewer-don.txt", self.label_viewer_don.cget("text") + self.entry_viewer_don_suffix.get())
 		self.utils.write_file("w", "text-files/challenge-sub.txt", self.label_challenge_sub.cget("text") + self.entry_challenge_sub_suffix.get())
 		self.utils.write_file("w", "text-files/challenge-don.txt", self.label_challenge_don.cget("text") + self.entry_challenge_don_suffix.get())
 		self.utils.write_file("w", "text-files/timer-game.txt", self.label_timer_game.cget("text"))
@@ -755,6 +757,14 @@ class MainFrame(tkinter.Frame):
 				self.entry_challenge_don_suffix.delete(0, tkinter.END)
 				self.entry_challenge_don_suffix.insert(0, config["CONTEXT"]["challenge_don_suffix"].replace("<SPACE>", " "))
 				
+			if "viewer_sub_suffix" in config["CONTEXT"]:
+				self.entry_viewer_sub_suffix.delete(0, tkinter.END)
+				self.entry_viewer_sub_suffix.insert(0, config["CONTEXT"]["viewer_sub_suffix"].replace("<SPACE>", " "))
+				
+			if "viewer_don_suffix" in config["CONTEXT"]:
+				self.entry_viewer_don_suffix.delete(0, tkinter.END)
+				self.entry_viewer_don_suffix.insert(0, config["CONTEXT"]["viewer_don_suffix"].replace("<SPACE>", " "))
+				
 		return init_values
 		
 	def save_context(self, file_name):
@@ -766,6 +776,8 @@ class MainFrame(tkinter.Frame):
 			"game_suffix": self.entry_game_suffix.get().replace(" ", "<SPACE>"),
 			"challenge_sub_suffix": self.entry_challenge_sub_suffix.get().replace(" ", "<SPACE>"),
 			"challenge_don_suffix": self.entry_challenge_don_suffix.get().replace(" ", "<SPACE>"),
+			"viewer_sub_suffix": self.entry_viewer_sub_suffix.get().replace(" ", "<SPACE>"),
+			"viewer_don_suffix": self.entry_viewer_don_suffix.get().replace(" ", "<SPACE>"),
 			"scraper_game": self.model["current_scraper_game"].replace(" ", "<SPACE>"),
 		}
 		
