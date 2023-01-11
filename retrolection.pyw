@@ -116,7 +116,8 @@ class MainFrame(tkinter.Frame):
 		canvas.create_image((0, 0), anchor = tkinter.NW, image = self.img_logo)
 		canvas.pack(side = tkinter.RIGHT)
 		
-		self.combo_consoles = self.create_combo(frame_sheet_labels, frame_sheet_values, "Consoles: ", self.on_combo_consoles_changed)
+		self.combo_consoles = self.create_combo(frame_sheet_labels, frame_sheet_values, "Supports: ", self.on_combo_consoles_changed)
+		self.entry_support_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe support: ")
 		self.combo_games = self.create_combo(frame_sheet_labels, frame_sheet_values, "Jeux: ", self.on_combo_games_changed)
 		self.entry_game_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe nom du jeu: ")
 		self.label_progression_console = self.create_label(frame_sheet_labels, frame_sheet_values, "Progression console: ")
@@ -133,6 +134,7 @@ class MainFrame(tkinter.Frame):
 		self.create_button(frame_sheet_bottom, "Envoyer vers XSplit", self.on_send_to_xsplit_click)
 		self.label_status = self.create_label(frame_run_labels, frame_run_values, "Statut: ")
 		self.label_timer_game = self.create_label(frame_run_labels, frame_run_values, "Temps: ")
+		self.label_timer_support = self.create_label(frame_run_labels, frame_run_values, "Temps support: ")
 		self.label_timer_total = self.create_label(frame_run_labels, frame_run_values, "Total Retrolection: ")
 		self.button_start_pause = self.create_button(frame_run_bottom, "Démarrer", self.on_start_pause_click)
 		self.create_button(frame_run_bottom, "Remettre à zéro", self.on_reset_click)
@@ -234,6 +236,11 @@ class MainFrame(tkinter.Frame):
 		self.label_timer_game.config(text = time_str)
 		self.utils.write_file("w", "text-files/timer-game.txt", time_str)
 		
+	def set_time_support(self, time_str):
+		self.model["consoles"][self.model["current_console"]]["timer_total"] = time_str
+		self.label_timer_support.config(text = time_str)
+		self.utils.write_file("w", "text-files/timer-support.txt", time_str)
+		
 	def set_total_time(self, time_str):
 		self.model["timer_total"] = time_str
 		self.label_timer_total.config(text = time_str)
@@ -267,6 +274,7 @@ class MainFrame(tkinter.Frame):
 		self.reload_sheet()
 		
 	def on_send_to_xsplit_click(self):
+		self.utils.write_file("w", "text-files/support.txt", self.combo_consoles.cget("values")[self.combo_consoles.current()] + self.entry_support_suffix.get())
 		self.utils.write_file("w", "text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()] + self.entry_game_suffix.get())
 		self.utils.write_file("w", "text-files/progression-console.txt", self.label_progression_console.cget("text"))
 		self.utils.write_file("w", "text-files/progression-total.txt", self.label_progression_total.cget("text"))
@@ -275,6 +283,7 @@ class MainFrame(tkinter.Frame):
 		self.utils.write_file("w", "text-files/challenge-sub.txt", self.label_challenge_sub.cget("text") + self.entry_challenge_sub_suffix.get())
 		self.utils.write_file("w", "text-files/challenge-don.txt", self.label_challenge_don.cget("text") + self.entry_challenge_don_suffix.get())
 		self.utils.write_file("w", "text-files/timer-game.txt", self.label_timer_game.cget("text"))
+		self.utils.write_file("w", "text-files/timer-support.txt", self.label_timer_support.cget("text"))
 		self.utils.write_file("w", "text-files/timer-total.txt", self.label_timer_total.cget("text"))
 		
 		if not self.canvas_cover.has_image():
@@ -306,6 +315,8 @@ class MainFrame(tkinter.Frame):
 		
 		timer_total_reset_value = self.utils.timeSecToStr(self.utils.timeStrToSec(self.model["timer_total"]) - self.utils.timeStrToSec(model_game["timer"]))
 		self.set_total_time(timer_total_reset_value)
+		timer_support_reset_value = self.utils.timeSecToStr(self.utils.timeStrToSec(model_console["timer_total"]) - self.utils.timeStrToSec(model_game["timer"]))
+		self.set_time_support(timer_total_reset_value)
 		self.set_time("00:00:00")
 		
 		if model_game["validation_id"] != "":
@@ -364,6 +375,10 @@ class MainFrame(tkinter.Frame):
 		t += 1
 		self.set_time(self.utils.timeSecToStr(t))
 		
+		t = self.utils.timeStrToSec(self.label_timer_support.cget("text"))
+		t += 1
+		self.set_time_support(self.utils.timeSecToStr(t))
+		
 		t = self.utils.timeStrToSec(self.label_timer_total.cget("text"))
 		t += 1
 		self.set_total_time(self.utils.timeSecToStr(t))
@@ -395,6 +410,7 @@ class MainFrame(tkinter.Frame):
 			self.model["current_console"] = current_console
 			self.fill_games(init_values)
 			self.label_progression_console.config(text = self.model["consoles"][current_console]["progression"])
+			self.label_timer_support.config(text = self.model["consoles"][current_console]["timer_total"])
 			
 	def on_combo_games_changed(self, event):
 		self.process_on_combo_games_changed(None)
@@ -745,6 +761,10 @@ class MainFrame(tkinter.Frame):
 			if "cover" in config["CONTEXT"]:
 				self.canvas_cover.load_image(config["CONTEXT"]["cover"], None, True, MainFrame.RESIZED_COVER_FILE_NAME)
 				
+			if "support_suffix" in config["CONTEXT"]:
+				self.entry_support_suffix.delete(0, tkinter.END)
+				self.entry_support_suffix.insert(0, config["CONTEXT"]["support_suffix"].replace("<SPACE>", " "))
+				
 			if "game_suffix" in config["CONTEXT"]:
 				self.entry_game_suffix.delete(0, tkinter.END)
 				self.entry_game_suffix.insert(0, config["CONTEXT"]["game_suffix"].replace("<SPACE>", " "))
@@ -773,6 +793,7 @@ class MainFrame(tkinter.Frame):
 		config["CONTEXT"] = {
 			"console": self.model["current_console"].replace(" ", "<SPACE>"),
 			"game": self.model["current_game"].replace(" ", "<SPACE>"),
+			"support_suffix": self.entry_support_suffix.get().replace(" ", "<SPACE>"),
 			"game_suffix": self.entry_game_suffix.get().replace(" ", "<SPACE>"),
 			"challenge_sub_suffix": self.entry_challenge_sub_suffix.get().replace(" ", "<SPACE>"),
 			"challenge_don_suffix": self.entry_challenge_don_suffix.get().replace(" ", "<SPACE>"),
