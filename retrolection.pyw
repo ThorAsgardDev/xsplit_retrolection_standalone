@@ -131,7 +131,7 @@ class MainFrame(tkinter.Frame):
 		self.label_challenge_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi don: ")
 		self.entry_challenge_don_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe défi don: ")
 		self.create_button(frame_sheet_bottom, "Recharger Gdoc", self.on_reload_sheet_click)
-		self.create_button(frame_sheet_bottom, "Envoyer vers XSplit", self.on_send_to_xsplit_click)
+		self.create_button(frame_sheet_bottom, "Envoyer vers OBS", self.on_send_to_obs_click)
 		self.label_status = self.create_label(frame_run_labels, frame_run_values, "Statut: ")
 		self.label_timer_game = self.create_label(frame_run_labels, frame_run_values, "Temps: ")
 		self.label_timer_support = self.create_label(frame_run_labels, frame_run_values, "Temps support: ")
@@ -273,7 +273,7 @@ class MainFrame(tkinter.Frame):
 		self.pause_run(True)
 		self.reload_sheet()
 		
-	def on_send_to_xsplit_click(self):
+	def on_send_to_obs_click(self):
 		self.utils.write_file("w", "text-files/support.txt", self.combo_consoles.cget("values")[self.combo_consoles.current()] + self.entry_support_suffix.get())
 		self.utils.write_file("w", "text-files/game.txt", self.combo_games.cget("values")[self.combo_games.current()] + self.entry_game_suffix.get())
 		self.utils.write_file("w", "text-files/progression-console.txt", self.label_progression_console.cget("text"))
