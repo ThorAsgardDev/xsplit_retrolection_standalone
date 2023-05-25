@@ -226,6 +226,7 @@ class MainFrame(tkinter.Frame):
 	def on_cover_load_click(self):
 		file_name = tkinter.filedialog.askopenfilename()
 		self.canvas_cover.load_image(file_name, None, True, MainFrame.RESIZED_COVER_FILE_NAME)
+		self.on_send_to_obs_click()
 		
 	def set_game_model_value(self, value_label, value):
 		model_games = self.model["consoles"][self.model["current_console"]]["games"]
