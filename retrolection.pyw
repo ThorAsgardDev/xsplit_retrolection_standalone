@@ -449,6 +449,7 @@ class MainFrame(tkinter.Frame):
 			self.update_status()
 			
 			self.fill_scraper_games(init_values)
+			self.on_send_to_obs_click()
 			
 	def update_status(self):
 		model_game = self.model["consoles"][self.model["current_console"]]["games"][self.model["current_game_index"]]
