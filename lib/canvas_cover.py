@@ -106,7 +106,7 @@ class CanvasCover():
 			
 		if new_width < 0 or new_height < 0:
 			return None
-		return pil_image.resize((new_width, new_height), PIL.Image.ANTIALIAS)
+		return pil_image.resize((new_width, new_height), PIL.Image.LANCZOS)
 		
 	def download_image(self, file_name):
 		if not self.pil_image_display:

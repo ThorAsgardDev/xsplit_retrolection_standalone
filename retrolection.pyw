@@ -680,7 +680,7 @@ class MainFrame(tkinter.Frame):
 					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["VIEWER_DON_COLUMN"]):
 						self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "viewer_don")
 					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["CHALLENGE_SUB_COLUMN"]):
-						self.set_sheet_data_challenge_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_sub")
+						self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_sub")
 					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["CHALLENGE_DON_FIRST_COLUMN"]):
 						self.set_sheet_data_challenge_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_don")
 					elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["PROGRESSION_CELL_RANGE"]):
