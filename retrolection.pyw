@@ -53,7 +53,7 @@ class MainFrame(tkinter.Frame):
         
         self.window.config(menu = menu_bar)
         
-        frame_left = tkinter.Frame(self, width = 300)
+        frame_left = tkinter.Frame(self, width = 350)
         frame_left.pack_propagate(False)
         frame_left.pack(side = tkinter.LEFT, fill = tkinter.BOTH)
         
@@ -63,32 +63,8 @@ class MainFrame(tkinter.Frame):
         
         frame_middle = tkinter.Frame(self)
         frame_middle.pack(side = tkinter.RIGHT, expand = tkinter.YES, fill = tkinter.BOTH)
-        
-        frame_cover = tkinter.LabelFrame(frame_middle, text = "Jaquette")
-        frame_cover.pack(side = tkinter.TOP, expand = tkinter.YES, fill = tkinter.BOTH, padx = 5, pady = 5)
-        
-        frame_bot = tkinter.LabelFrame(frame_middle, text = "Bot", height = 100)
-        frame_bot.pack(side = tkinter.BOTTOM, fill = tkinter.BOTH, padx = 5, pady = 5)
-        
-        frame_bot_labels = tkinter.Frame(frame_bot)
-        frame_bot_labels.pack(side = tkinter.LEFT, fill = tkinter.BOTH)
-        
-        frame_bot_values = tkinter.Frame(frame_bot)
-        frame_bot_values.pack(side = tkinter.RIGHT, expand = tkinter.YES, fill = tkinter.BOTH)
-        
-        frame_logo = tkinter.Frame(frame_right)
-        frame_logo.pack(side = tkinter.BOTTOM, fill = tkinter.BOTH)
-        
-        frame_sheet = tkinter.LabelFrame(frame_left, text = "Gdoc")
-        frame_sheet.pack(side = tkinter.TOP, fill = tkinter.BOTH, padx = 5, pady = 5)
-        
-        frame_sheet_top = tkinter.Frame(frame_sheet)
-        frame_sheet_top.pack(side = tkinter.TOP, fill = tkinter.BOTH)
-        
-        frame_sheet_bottom = tkinter.Frame(frame_sheet)
-        frame_sheet_bottom.pack(side = tkinter.BOTTOM, fill = tkinter.BOTH)
-        
-        frame_run = tkinter.LabelFrame(frame_left, text = "Run")
+
+        frame_run = tkinter.LabelFrame(frame_middle, text = "Run")
         frame_run.pack(side = tkinter.TOP, fill = tkinter.BOTH, padx = 5, pady = 5)
         
         frame_run_top = tkinter.Frame(frame_run)
@@ -96,18 +72,46 @@ class MainFrame(tkinter.Frame):
         
         frame_run_bottom = tkinter.Frame(frame_run)
         frame_run_bottom.pack(side = tkinter.BOTTOM, fill = tkinter.BOTH)
-        
-        frame_sheet_labels = tkinter.Frame(frame_sheet_top)
-        frame_sheet_labels.pack(side = tkinter.LEFT, fill = tkinter.BOTH)
-        
-        frame_sheet_values = tkinter.Frame(frame_sheet_top)
-        frame_sheet_values.pack(side = tkinter.RIGHT, expand = tkinter.YES, fill = tkinter.BOTH)
-        
+
         frame_run_labels = tkinter.Frame(frame_run_top)
         frame_run_labels.pack(side = tkinter.LEFT, fill = tkinter.BOTH)
         
         frame_run_values = tkinter.Frame(frame_run_top)
         frame_run_values.pack(side = tkinter.RIGHT, expand = tkinter.YES, fill = tkinter.BOTH)
+        
+        frame_cover = tkinter.LabelFrame(frame_middle, text = "Jaquette")
+        frame_cover.pack(side = tkinter.TOP, expand = tkinter.YES, fill = tkinter.BOTH, padx = 5, pady = 5)
+        
+        frame_logo = tkinter.Frame(frame_right)
+        frame_logo.pack(side = tkinter.BOTTOM, fill = tkinter.BOTH)
+        
+        frame_sheet = tkinter.LabelFrame(frame_left, text = "Gdoc")
+        frame_sheet.pack(side = tkinter.TOP, fill = tkinter.BOTH, padx = 5, pady = 5)
+
+        frame_bot = tkinter.LabelFrame(frame_left, text = "Bot", height = 100)
+        frame_bot.pack(side = tkinter.TOP, fill = tkinter.BOTH, padx = 5, pady = 5)
+        
+        frame_bot_labels = tkinter.Frame(frame_bot)
+        frame_bot_labels.pack(side = tkinter.LEFT, fill = tkinter.BOTH)
+
+        frame_bot_values = tkinter.Frame(frame_bot)
+        frame_bot_values.pack(side = tkinter.RIGHT, expand = tkinter.YES, fill = tkinter.BOTH)
+        
+        frame_sheet_top = tkinter.Frame(frame_sheet)
+        frame_sheet_top.pack(side = tkinter.TOP, fill = tkinter.BOTH)
+        
+        frame_sheet_bottom = tkinter.Frame(frame_sheet)
+        frame_sheet_bottom.pack(side = tkinter.BOTTOM, fill = tkinter.BOTH)
+        
+        frame_sheet_labels = tkinter.Frame(frame_sheet_top)
+        frame_sheet_labels.pack(side = tkinter.LEFT, fill = tkinter.BOTH)
+        
+        frame_sheet_suffixes = tkinter.Frame(frame_sheet_top, width = 80)
+        frame_sheet_suffixes.pack_propagate(False)
+        frame_sheet_suffixes.pack(side = tkinter.RIGHT, fill = tkinter.BOTH)
+
+        frame_sheet_values = tkinter.Frame(frame_sheet_top)
+        frame_sheet_values.pack(side = tkinter.RIGHT, expand = tkinter.YES, fill = tkinter.BOTH)
         
         frame_scraper_game_info = tkinter.LabelFrame(frame_right, text = "Informations jeu")
         frame_scraper_game_info.pack(side = tkinter.TOP, fill = tkinter.BOTH, padx = 5, pady = 5)
@@ -133,22 +137,17 @@ class MainFrame(tkinter.Frame):
         canvas.create_image((0, 0), anchor = tkinter.NW, image = self.img_logo)
         canvas.pack(side = tkinter.RIGHT)
         
-        self.combo_consoles = self.create_combo(frame_sheet_labels, frame_sheet_values, "Supports: ", self.on_combo_consoles_changed)
-        self.entry_support_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe support: ")
-        self.combo_games = self.create_combo(frame_sheet_labels, frame_sheet_values, "Jeux: ", self.on_combo_games_changed)
-        self.entry_game_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe nom du jeu: ")
-        self.label_progression_console = self.create_label(frame_sheet_labels, frame_sheet_values, "Progression console: ")
-        self.label_progression_total = self.create_label(frame_sheet_labels, frame_sheet_values, "Progression totale: ")
-        self.label_viewer_sub = self.create_label(frame_sheet_labels, frame_sheet_values, "Viewer sub: ")
-        self.entry_viewer_sub_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe viewer sub: ")
-        self.label_viewer_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Viewer don: ")
-        self.entry_viewer_don_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe viewer don: ")
-        self.label_challenge_sub = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi sub: ")
-        self.entry_challenge_sub_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe défi sub: ")
-        self.label_challenge_don = self.create_label(frame_sheet_labels, frame_sheet_values, "Défi don: ")
-        self.entry_challenge_don_suffix = self.create_entry(frame_sheet_labels, frame_sheet_values, "Suffixe défi don: ")
+        self.combo_consoles, self.entry_support_suffix = self.create_combo_with_suffix(frame_sheet_labels, frame_sheet_values, frame_sheet_suffixes, True, "Supports: ", self.on_combo_consoles_changed)
+        self.combo_games, self.entry_game_suffix = self.create_combo_with_suffix(frame_sheet_labels, frame_sheet_values, frame_sheet_suffixes, True, "Jeux: ", self.on_combo_games_changed)
+        self.label_progression_console, _ = self.create_label_with_suffix(frame_sheet_labels, frame_sheet_values, frame_sheet_suffixes, False, "Progression console: ")
+        self.label_progression_total, _ = self.create_label_with_suffix(frame_sheet_labels, frame_sheet_values, frame_sheet_suffixes, False, "Progression totale: ")
+        self.label_viewer_sub, self.entry_viewer_sub_suffix = self.create_label_with_suffix(frame_sheet_labels, frame_sheet_values, frame_sheet_suffixes, True, "Viewer sub: ")
+        self.label_viewer_don, self.entry_viewer_don_suffix = self.create_label_with_suffix(frame_sheet_labels, frame_sheet_values, frame_sheet_suffixes, True, "Viewer don: ")
+        self.label_challenge_sub, self.entry_challenge_sub_suffix = self.create_label_with_suffix(frame_sheet_labels, frame_sheet_values, frame_sheet_suffixes, True, "Défi sub: ")
+        self.label_challenge_don, self.entry_challenge_don_suffix = self.create_label_with_suffix(frame_sheet_labels, frame_sheet_values, frame_sheet_suffixes, True, "Défi don: ")
         self.create_button(frame_sheet_bottom, "Recharger Gdoc", self.on_reload_sheet_click)
         self.create_button(frame_sheet_bottom, "Envoyer vers OBS", self.on_send_to_obs_click)
+
         self.label_status = self.create_label(frame_run_labels, frame_run_values, "Statut: ")
         self.label_timer_game = self.create_label(frame_run_labels, frame_run_values, "Temps: ")
         self.label_timer_support = self.create_label(frame_run_labels, frame_run_values, "Temps support: ")
@@ -156,7 +155,9 @@ class MainFrame(tkinter.Frame):
         self.button_start_pause = self.create_button(frame_run_bottom, "Démarrer", self.on_start_pause_click)
         self.create_button(frame_run_bottom, "Remettre à zéro", self.on_reset_click)
         self.create_button(frame_run_bottom, "Valider", self.on_validate_click)
+
         self.create_button(frame_cover, "Charger...", self.on_cover_load_click)
+
         self.entry_bot_text = self.create_entry(frame_bot_labels, frame_bot_values, "Text: ")
         self.entry_bot_period_text = self.create_entry(frame_bot_labels, frame_bot_values, "Période (min): ")
         self.set_entry_text(self.entry_bot_period_text, 30)
@@ -185,14 +186,42 @@ class MainFrame(tkinter.Frame):
         combo = tkinter.ttk.Combobox(frame_value, state = "readonly")
         combo.pack(padx = 2, pady = 2, fill = tkinter.X)
         combo.bind("<<ComboboxSelected>>", on_changed_cb)
+
         return combo
+    
+    def create_combo_with_suffix(self, frame_label, frame_value, frame_suffix, editable_suffix, text, on_changed_cb):
+        combo = self.create_combo(frame_label, frame_value, text, on_changed_cb)
+
+        suffix_entry = None
+        if editable_suffix:
+            suffix_entry = tkinter.Entry(frame_suffix)
+            suffix_entry.pack(fill = tkinter.X, padx = 2, pady = 3)
+        else:
+            label = tkinter.Label(frame_suffix, anchor = tkinter.W)
+            label.pack(anchor = tkinter.W, padx = 2, pady = 2)
+
+        return combo, suffix_entry
         
     def create_label(self, frame_label, frame_value, text):
         label = tkinter.Label(frame_label, anchor = tkinter.W, text = text)
         label.pack(anchor = tkinter.W, padx = 2, pady = 2)
         label_value = tkinter.Label(frame_value, anchor = tkinter.W)
         label_value.pack(anchor = tkinter.W, padx = 2, pady = 2)
+
         return label_value
+    
+    def create_label_with_suffix(self, frame_label, frame_value, frame_suffix, editable_suffix, text):
+        label_value = self.create_label(frame_label, frame_value, text)
+
+        suffix_entry = None
+        if editable_suffix:
+            suffix_entry = tkinter.Entry(frame_suffix)
+            suffix_entry.pack(fill = tkinter.X, padx = 2, pady = 3)
+        else:
+            label = tkinter.Label(frame_suffix, anchor = tkinter.W)
+            label.pack(anchor = tkinter.W, padx = 2, pady = 2)
+
+        return label_value, suffix_entry
         
     def create_entry(self, frame_label, frame_value, text):
         label = tkinter.Label(frame_label, anchor = tkinter.W, text = text)
@@ -888,6 +917,8 @@ def main():
     icon = tkinter.PhotoImage(file = "resources/icon.png")
     window.tk.call("wm", "iconphoto", window._w, icon)
     window.after(1, f.load)
+    # Auto start bot
+    window.after(1, f.on_bot_click)
     window.mainloop()
     
 
