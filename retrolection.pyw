@@ -17,8 +17,9 @@ import lib.thegamesdb_client
 import lib.utils
 import lib.canvas_cover
 import lib.bot
+import lib.remote_controller_server
 import time
-
+        
 
 class MainFrame(tkinter.Frame):
     TOKENS_FILENAME = "tokens.ini"
@@ -42,6 +43,9 @@ class MainFrame(tkinter.Frame):
         self.bot_thread = lib.bot.BotThread(self.config)
         self.bot_thread.start()
         self.bot = self.bot_thread.get_bot()
+
+        self.remote_controller_server_thread = lib.remote_controller_server.RemoteControllerServerThread(self.config, self.on_remote_controller_request)
+        self.remote_controller_server_thread.start()
         
         self.pack(expand = tkinter.YES, fill = tkinter.BOTH)
         
@@ -282,6 +286,12 @@ class MainFrame(tkinter.Frame):
             self.bot.stop_repeat_message_task(self.bot_task)
             self.bot_task = None
             self.entry_bot_button.config(text="Start repeat in chat")
+
+    def on_remote_controller_request(self, path):
+        if path == "/start_pause":
+            self.on_start_pause_click()
+        elif path == "/validate":
+            self.on_validate_click()
         
     def on_menu_file_open(self):
         file_name = tkinter.filedialog.askopenfilename(defaultextension = "*.rcx", filetypes = [("Retrolection context files", "*.rcx")])
