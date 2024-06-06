@@ -3,7 +3,6 @@ import os
 import sys
 import traceback
 import configparser
-import requests
 import keyboard
 import tkinter
 import tkinter.ttk
@@ -22,7 +21,6 @@ import time
         
 
 class MainFrame(tkinter.Frame):
-    TOKENS_FILENAME = "tokens.ini"
     RESIZED_COVER_FILE_NAME = "cover.png"
     SCRAPER_COVER_FILE_NAME = "scraper_cover.png"
     
@@ -790,10 +788,6 @@ class MainFrame(tkinter.Frame):
         return model
         
     def load(self):
-        if not os.path.isfile(MainFrame.TOKENS_FILENAME):
-            tkinter.messagebox.showerror("Error", " File "+ MainFrame.TOKENS_FILENAME +" not found. Please run grant_permissions.bat.")
-            sys.exit()
-            
         self.game_db_client = None
         if self.config["DATA_BASES"]["GAMES_DB"] == "THEGAMESDB":
             st = time.time()
@@ -805,7 +799,7 @@ class MainFrame(tkinter.Frame):
             print(time.time(), "load igdb_client init (ms): ", (time.time() - st) * 1000)
             
         st = time.time()
-        self.sheets_client = lib.sheets_client.SheetsClient(self.config["SHEET"]["GDOC_API_KEY"], self.config["SHEET"]["OAUTH_CLIENT_ID"], self.config["SHEET"]["OAUTH_CLIENT_SECRET"], self.config["SHEET"]["SPREAD_SHEET_ID"], MainFrame.TOKENS_FILENAME)
+        self.sheets_client = lib.sheets_client.SheetsClient(self.config["SHEET"]["SPREAD_SHEET_ID"])
         print(time.time(), "load sheets_client init (ms): ", (time.time() - st) * 1000)
         
         st = time.time()
