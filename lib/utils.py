@@ -56,7 +56,8 @@ class Utils():
 			except:
 				nb_retries += 1
 				time.sleep(0.01)
-				
-	def sheet_a1_value_to_column_number(self, a1_value):
-		return ord(a1_value[:1].upper()) - ord("A")
+	
+	def split_sheet_a1_value(self, a1_value):
+		v = a1_value.split("!")
+		return v[0], v[1]
 		

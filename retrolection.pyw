@@ -613,6 +613,13 @@ class MainFrame(tkinter.Frame):
                     
             self.canvas_scraper_cover.load_image(image_original_path, image_thumb_path, False, None)
         
+    def fill_model_from_values(self, values, model_games, field_name):
+        id = 0
+        for value in values:
+            v = value[0] if len(value) > 0 else ""
+            model_games[id][field_name] = v
+            id += 1
+
     def set_sheet_data_simple_values_to_model(self, data, model_games, game_start_row, field_name):
         id = data["startRow"] - game_start_row
         if "rowData" not in data:
@@ -669,6 +676,12 @@ class MainFrame(tkinter.Frame):
                 return nb_completed, nb_total
                 
         return 0, 0
+    
+    def build_range(self, config_sheet, key, first_line):
+        return config_sheet[key] + first_line + ":" + config_sheet[key]
+    
+    def range_equals(self, r, config_sheet, key, first_line):
+        return r.startswith(self.build_range(config_sheet, key, first_line))
         
     def build_model(self):
         model = {
@@ -685,98 +698,81 @@ class MainFrame(tkinter.Frame):
         
         response = self.sheets_client.get_sheets()
         
-        if response["sheets"]:
-            start_index = int(config_sheet["FIRST_GAME_CONSOLE_SHEET"]) - 1
-            for i in range(start_index, start_index + int(config_sheet["NUMBER_OF_GAME_CONSOLE_SHEETS"])):
-                item = response["sheets"][i];
-                if item["properties"] and item["properties"]["title"]:
-                    model["consoles"][item["properties"]["title"]] = {
-                        "games": [],
-                        "progression": "",
-                        "timer_total": "00:00:00",
-                    }
+        start_index = int(config_sheet["FIRST_GAME_CONSOLE_SHEET"]) - 1
+        for i in range(start_index, start_index + int(config_sheet["NUMBER_OF_GAME_CONSOLE_SHEETS"])):
+            model["consoles"][response[i].title] = {
+                "games": [],
+                "progression": "",
+                "timer_total": "00:00:00",
+            }
                     
         first_line = config_sheet["FIRST_GAME_LINE"]
         
         ranges = []
         
         for console in model["consoles"]:
-            ranges.append(console + "!" + config_sheet["VALIDATION_COLUMN"] + first_line + ":" + config_sheet["VALIDATION_COLUMN"])
-            ranges.append(console + "!" + config_sheet["GAME_NAME_COLUMN"] + first_line + ":" + config_sheet["GAME_NAME_COLUMN"])
-            ranges.append(console + "!" + config_sheet["TIMER_GAME_COLUMN"] + first_line + ":" + config_sheet["TIMER_GAME_COLUMN"])
-            ranges.append(console + "!" + config_sheet["VIEWER_SUB_COLUMN"] + first_line + ":" + config_sheet["VIEWER_SUB_COLUMN"])
-            ranges.append(console + "!" + config_sheet["VIEWER_DON_COLUMN"] + first_line + ":" + config_sheet["VIEWER_DON_COLUMN"])
-            ranges.append(console + "!" + config_sheet["CHALLENGE_SUB_COLUMN"] + first_line + ":" + config_sheet["CHALLENGE_SUB_COLUMN"])
-            ranges.append(console + "!" + config_sheet["CHALLENGE_DON_FIRST_COLUMN"] + first_line + ":" + config_sheet["CHALLENGE_DON_LAST_COLUMN"])
+            ranges.append(console + "!" + self.build_range(config_sheet, "VALIDATION_COLUMN", first_line))
+            ranges.append(console + "!" + self.build_range(config_sheet, "GAME_NAME_COLUMN", first_line))
+            ranges.append(console + "!" + self.build_range(config_sheet, "TIMER_GAME_COLUMN", first_line))
+            ranges.append(console + "!" + self.build_range(config_sheet, "VIEWER_SUB_COLUMN", first_line))
+            ranges.append(console + "!" + self.build_range(config_sheet, "VIEWER_DON_COLUMN", first_line))
+            ranges.append(console + "!" + self.build_range(config_sheet, "CHALLENGE_SUB_COLUMN", first_line))
+            ranges.append(console + "!" + self.build_range(config_sheet, "CHALLENGE_DON_FIRST_COLUMN", first_line))
             ranges.append(console + "!" + config_sheet["PROGRESSION_CELL_RANGE"])
-            ranges.append(console + "!" + config_sheet["TIMER_TOTAL_CELL"] + ":" + config_sheet["TIMER_TOTAL_CELL"])
+            ranges.append(console + "!" + config_sheet["TIMER_TOTAL_CELL"])
             
         values = self.sheets_client.get_values(ranges)
-        
-        sheets = values["sheets"]
-        
+
         nb_games_completed = 0
         nb_games_total = 0
-        
-        for sheet in sheets:
-            console = sheet["properties"]["title"]
-            
-            if "data" in sheet:
-                data = sheet["data"]
-                
-                # Find game column
-                game_data = None
-                game_start_row = None
-                for d in data:
-                    if "startColumn" in d \
-                    and d["startColumn"] == self.utils.sheet_a1_value_to_column_number(config_sheet["GAME_NAME_COLUMN"]):
-                        game_data = d
-                        game_start_row = d["startRow"]
-                        break
-                        
-                for r in game_data["rowData"]:
-                    if "values" in r \
-                    and "formattedValue" in r["values"][0]:
-                        model["consoles"][console]["games"].append({
-                            "name": r["values"][0]["formattedValue"],
-                            "validation_id": "",
-                            "timer": "00:00:00",
-                            "viewer_sub": "",
-                            "viewer_don": "",
-                            "challenge_sub": "",
-                            "challenge_don": "",
-                        })
-                        
-                for d in data:
-                    if "startColumn" in d:
-                        column = d["startColumn"]
-                    else:
-                        column = 0
-                        
-                    if "startRow" in d:
-                        row = d["startRow"]
-                    else:
-                        row = 0
-                        
-                    if row != 1 and column == self.utils.sheet_a1_value_to_column_number(config_sheet["VALIDATION_COLUMN"]):
-                        self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "validation_id")
-                    elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["TIMER_GAME_COLUMN"]):
-                        self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "timer")
-                    elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["VIEWER_SUB_COLUMN"]):
-                        self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "viewer_sub")
-                    elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["VIEWER_DON_COLUMN"]):
-                        self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "viewer_don")
-                    elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["CHALLENGE_SUB_COLUMN"]):
-                        self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_sub")
-                    elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["CHALLENGE_DON_FIRST_COLUMN"]):
-                        self.set_sheet_data_simple_values_to_model(d, model["consoles"][console]["games"], game_start_row, "challenge_don")
-                    elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["PROGRESSION_CELL_RANGE"]):
-                        nb_completed, nb_total = self.set_sheet_data_progression_value_to_model(d, model["consoles"][console], "progression")
+
+        if "valueRanges" in values:
+            for value_range in values["valueRanges"]:
+                if "range" in value_range and "values" in value_range:
+                    console, r = self.utils.split_sheet_a1_value(value_range["range"])
+                    console = console.strip("'")
+                    if self.range_equals(r, config_sheet, "GAME_NAME_COLUMN", first_line):
+                        for value in value_range["values"]:
+                            game_name = value[0] if len(value) > 0 else ""
+                            model["consoles"][console]["games"].append({
+                                "name": game_name,
+                                "validation_id": "",
+                                "timer": "00:00:00",
+                                "viewer_sub": "",
+                                "viewer_don": "",
+                                "challenge_sub": "",
+                                "challenge_don": "",
+                            })
+
+            for value_range in values["valueRanges"]:
+                if "range" in value_range and "values" in value_range:
+                    console, r = self.utils.split_sheet_a1_value(value_range["range"])
+                    console = console.strip("'")
+                    if self.range_equals(r, config_sheet, "VALIDATION_COLUMN", first_line):
+                        self.fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "validation_id")
+                    elif self.range_equals(r, config_sheet, "TIMER_GAME_COLUMN", first_line):
+                        self.fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "timer")
+                    elif self.range_equals(r, config_sheet, "VIEWER_SUB_COLUMN", first_line):
+                        self.fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "viewer_sub")
+                    elif self.range_equals(r, config_sheet, "VIEWER_DON_COLUMN", first_line):
+                        self.fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "viewer_don")
+                    elif self.range_equals(r, config_sheet, "CHALLENGE_SUB_COLUMN", first_line):
+                        self.fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "challenge_sub")
+                    elif self.range_equals(r, config_sheet, "CHALLENGE_DON_FIRST_COLUMN", first_line):
+                        self.fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "challenge_don")
+                    elif r == config_sheet["TIMER_TOTAL_CELL"]:
+                        model["consoles"][console]["timer_total"] = value_range["values"][0][0]
+                    elif r == config_sheet["PROGRESSION_CELL_RANGE"]:
+                        nb_completed = 0
+                        nb_total = 0
+                        if len(value_range["values"][0]) == 3:
+                            nb_completed = int(value_range["values"][0][0])
+                            nb_total = int(value_range["values"][0][2])
+                            model["consoles"][console]["progression"] = self.utils.progressValuesToStr(nb_completed, nb_total)
+
                         nb_games_completed += nb_completed
                         nb_games_total += nb_total
-                    elif column == self.utils.sheet_a1_value_to_column_number(config_sheet["TIMER_TOTAL_CELL"]):
-                        self.set_sheet_data_simple_value_to_model(d, model["consoles"][console], "timer_total")
-                        
+          
         t = 0
         for console in model["consoles"]:
             t += self.utils.timeStrToSec(model["consoles"][console]["timer_total"])
@@ -832,7 +828,7 @@ class MainFrame(tkinter.Frame):
         init_values = {}
         if os.path.exists(file_name):
             config = configparser.ConfigParser()
-            config.read(file_name)
+            config.read(file_name, encoding="utf-8")
             
             if "console" in config["CONTEXT"]:
                 init_values["console"] = config["CONTEXT"]["console"].replace("<SPACE>", " ")
@@ -900,8 +896,8 @@ class MainFrame(tkinter.Frame):
         image_path = self.canvas_cover.get_image_path()
         if image_path:
             config["CONTEXT"]["cover"] = image_path
-            
-        with open(file_name, "w") as f:
+
+        with open(file_name, "w", encoding="utf-8") as f:
             config.write(f)
         
     def on_close(self):
