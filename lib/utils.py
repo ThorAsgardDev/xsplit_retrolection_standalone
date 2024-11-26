@@ -10,6 +10,9 @@ class Utils():
 		traceback.print_stack()
 		
 	def timeStrToSec(self, t):
+		if t == "":
+			return 0
+		
 		v = t.split(":")
 		
 		if len(v) >= 3:
