@@ -31,6 +31,8 @@ Utiliser les fichiers suivants:
 Nom du jeu: <appli retrolection>/text-files/game.txt
 L'indicateur de progression de la console: <appli retrolection>/text-files/progression-console.txt
 L'indicateur de progression totale Retrolection: <appli retrolection>/text-files/progression-total.txt
+Version: <appli retrolection>/text-files/version.txt
+Estimate: <appli retrolection>/text-files/estimate.txt
 Timer du jeu: <appli retrolection>/text-files/timer-game.txt
 Timer Retrolection: <appli retrolection>/text-files/timer-total.txt
 ```
