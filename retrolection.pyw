@@ -5,7 +5,6 @@ import configparser
 import tkinter
 import tkinter.ttk
 import tkinter.filedialog
-import tkinter.messagebox
 import PIL.Image
 import PIL.ImageTk
 import lib.sheets_client
@@ -106,6 +105,8 @@ class MainFrame(tkinter.Frame):
         self.__create_button(frame_sheet_bottom, "Envoyer vers OBS", self.__on_send_to_obs_click)
 
         self.__label_status = self.__create_label(frame_run_labels, frame_run_values, "Statut: ")
+        self.__label_version_game = self.__create_label(frame_run_labels, frame_run_values, "Version: ")
+        self.__label_estimated_time_game = self.__create_label(frame_run_labels, frame_run_values, "Estimate: ")
         self.__label_timer_game = self.__create_label(frame_run_labels, frame_run_values, "Temps: ")
         self.__label_timer_support = self.__create_label(frame_run_labels, frame_run_values, "Temps support: ")
         self.__label_timer_total = self.__create_label(frame_run_labels, frame_run_values, "Total Retrolection: ")
@@ -256,6 +257,8 @@ class MainFrame(tkinter.Frame):
         self.__utils.write_file("w", "text-files/game.txt", self.__combo_games.cget("values")[self.__combo_games.current()] + self.__entry_game_suffix.get())
         self.__utils.write_file("w", "text-files/progression-console.txt", self.__label_progression_console.cget("text"))
         self.__utils.write_file("w", "text-files/progression-total.txt", self.__label_progression_total.cget("text"))
+        self.__utils.write_file("w", "text-files/version.txt", self.__label_version_game.cget("text"))
+        self.__utils.write_file("w", "text-files/estimate.txt", self.__label_estimated_time_game.cget("text"))
         self.__utils.write_file("w", "text-files/timer-game.txt", self.__label_timer_game.cget("text"))
         self.__utils.write_file("w", "text-files/timer-support.txt", self.__label_timer_support.cget("text"))
         self.__utils.write_file("w", "text-files/timer-total.txt", self.__label_timer_total.cget("text"))
@@ -387,7 +390,7 @@ class MainFrame(tkinter.Frame):
             self.__label_timer_support.config(text = self.__model["consoles"][current_console]["timer_total"])
             
     def __on_combo_games_changed(self, event):
-        self.__process_on_combo_games_changed(None)
+        self.__process_on_combo_games_changed()
         
     def __fill_games(self, init_values):
         values = []
@@ -401,9 +404,9 @@ class MainFrame(tkinter.Frame):
         if init_values and ("game" in init_values):
             self.__select_combo_value(self.__combo_games, init_values["game"])
             
-        self.__process_on_combo_games_changed(init_values)
+        self.__process_on_combo_games_changed()
         
-    def __process_on_combo_games_changed(self, init_values):
+    def __process_on_combo_games_changed(self):
         current_game = self.__get_combo_value(self.__combo_games)
         
         if current_game != self.__model["current_game"]:
@@ -414,6 +417,8 @@ class MainFrame(tkinter.Frame):
             self.__model["current_game_index"] = current_game_index
             model_games = self.__model["consoles"][self.__model["current_console"]]["games"]
             
+            self.__label_version_game.config(text = model_games[current_game_index]["version"])
+            self.__label_estimated_time_game.config(text = model_games[current_game_index]["estimated_time"])
             self.__label_timer_game.config(text = model_games[current_game_index]["timer"])
             
             self.__update_status()
@@ -473,6 +478,8 @@ class MainFrame(tkinter.Frame):
         for console in model["consoles"]:
             ranges.append(console + "!" + self.__build_range(config_sheet, "VALIDATION_COLUMN", first_line))
             ranges.append(console + "!" + self.__build_range(config_sheet, "GAME_NAME_COLUMN", first_line))
+            ranges.append(console + "!" + self.__build_range(config_sheet, "VERSION_GAME_COLUMN", first_line))
+            ranges.append(console + "!" + self.__build_range(config_sheet, "ESTIMATED_TIME_NAME_COLUMN", first_line))
             ranges.append(console + "!" + self.__build_range(config_sheet, "TIMER_GAME_COLUMN", first_line))
             ranges.append(console + "!" + config_sheet["PROGRESSION_CELL_RANGE"])
             ranges.append(console + "!" + config_sheet["TIMER_TOTAL_CELL"])
@@ -493,6 +500,8 @@ class MainFrame(tkinter.Frame):
                             model["consoles"][console]["games"].append({
                                 "name": game_name,
                                 "validation_id": "",
+                                "version": "",
+                                "estimated_time": "",
                                 "timer": "00:00:00",
                             })
 
@@ -502,6 +511,10 @@ class MainFrame(tkinter.Frame):
                     console = console.strip("'")
                     if self.__range_equals(r, config_sheet, "VALIDATION_COLUMN", first_line):
                         self.__fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "validation_id")
+                    elif self.__range_equals(r, config_sheet, "VERSION_GAME_COLUMN", first_line):
+                        self.__fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "version")
+                    elif self.__range_equals(r, config_sheet, "ESTIMATED_TIME_NAME_COLUMN", first_line):
+                        self.__fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "estimated_time")
                     elif self.__range_equals(r, config_sheet, "TIMER_GAME_COLUMN", first_line):
                         self.__fill_model_from_values(value_range["values"], model["consoles"][console]["games"], "timer")
                     elif r == config_sheet["TIMER_TOTAL_CELL"]:
